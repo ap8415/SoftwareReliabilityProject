@@ -38,13 +38,15 @@ print(args.sut_path)
 # TODO: perform args check
 
 with cd(args.sut_path):
-    print(os.listdir())
+    i = 1
 
-    while True:
+    while i < 50:
         variables = random.randint(1, 10)
         clauses = random.randint(1, variables * 3)
         input = generate_input(variables, clauses, random.random() > 0.95)
         f = open("test.cnf", "w")
         f.write(input)
-        subprocess.call(["./runsat.sh", "test.cnf"], shell=False)
-
+        sanitizer_output = subprocess.check_output(["./runsat.sh", "test.cnf"], shell=False)
+        g = open(f'san_out_{i}')
+        g.write(sanitizer_output)
+        i = i + 1
