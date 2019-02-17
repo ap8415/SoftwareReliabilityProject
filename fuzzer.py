@@ -46,7 +46,11 @@ with cd(args.sut_path):
         input = generate_input(variables, clauses, random.random() > 0.95)
         f = open("test.cnf", "w")
         f.write(input)
-        sanitizer_output = subprocess.check_output(["./runsat.sh", "test.cnf"], shell=False)
-        g = open(f'san_out_{i}')
-        g.write(sanitizer_output)
+        sanitizer_output = ''
+        try:
+            sanitizer_output = subprocess.check_output(["./runsat.sh", "test.cnf"], shell=False)
+        except subprocess.CalledProcessError as e:
+            sanitizer_output = e.output
+        g = open(f'san_out_{i}', "w")
+        g.write(sanitizer_output.decode())
         i = i + 1
