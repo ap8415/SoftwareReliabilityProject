@@ -1,0 +1,5 @@
+*.o
+sat
+san_out_*
+*.gcda
+*.gcno

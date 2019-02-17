@@ -56,6 +56,9 @@ with cd(args.sut_path):
         g.write(output)
         g.close()
         i = i + 1
+        # On last fuzzer iteration, remove test.cnf.
+        if i == 50:
+            os.remove("test.cnf")
 
     f = open("Cepulamea.txt", "w")
     f.write("CE PULA MEA")
