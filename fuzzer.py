@@ -52,5 +52,5 @@ with cd(args.sut_path):
         except subprocess.CalledProcessError as e:
             sanitizer_output = e.output
         g = open(f'san_out_{i}', "w")
-        g.write(sanitizer_output.decode())
+        print(sanitizer_output.decode(), file=g)
         i = i + 1
