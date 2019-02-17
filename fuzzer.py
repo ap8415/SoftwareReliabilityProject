@@ -52,5 +52,11 @@ with cd(args.sut_path):
         except subprocess.CalledProcessError as e:
             sanitizer_output = e.output
         g = open(f'san_out_{i}', "w")
-        print(sanitizer_output.decode(), file=g)
+        output = sanitizer_output.decode()
+        g.write(output)
+        g.close()
         i = i + 1
+
+    f = open("Cepulamea.txt", "w")
+    f.write("CE PULA MEA")
+    f.close()
