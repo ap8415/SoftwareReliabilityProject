@@ -48,7 +48,7 @@ with cd(args.sut_path):
         f.write(input)
 
         g = open(f'san_out_{i}', "w")
-        subprocess.run(["./runsat.sh", "test.cnf"], stdout=g, capture_output=True)
+        subprocess.run(["./runsat.sh", "test.cnf"], stdout=g, stderr=g)
         g.close()
 
         i = i + 1
