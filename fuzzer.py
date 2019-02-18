@@ -46,20 +46,12 @@ with cd(args.sut_path):
         input = generate_input(variables, clauses, random.random() > 0.95)
         f = open("test.cnf", "w")
         f.write(input)
-        sanitizer_output = ''
-        try:
-            sanitizer_output = subprocess.check_output(["./runsat.sh", "test.cnf"], shell=False)
-        except subprocess.CalledProcessError as e:
-            sanitizer_output = e.output
-        g = open(f'san_out_{i}', "w")
-        output = sanitizer_output.decode()
-        g.write(output)
-        g.close()
-        i = i + 1
-        # On last fuzzer iteration, remove test.cnf.
-        if i == 50:
-            os.remove("test.cnf")
 
-    f = open("Cepulamea.txt", "w")
-    f.write("CE PULA MEA")
-    f.close()
+        g = open(f'san_out_{i}', "w")
+        subprocess.run(["./runsat.sh", "test.cnf"], stdout=g, capture_output=True)
+        g.close()
+
+        i = i + 1
+
+    # After last fuzzer iteration, remove test.cnf.
+    os.remove("test.cnf")
