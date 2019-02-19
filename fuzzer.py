@@ -79,32 +79,24 @@ def parse_gcov_info(gcov_output):
     return file_coverage
 
 
-command = '''!/bin/bash \n
-           ./runsat.sh test.cnf &> san_output.txt \n
-           find -name \'*.c\' -exec gcov {} \; > gcov_output.txt''' 
+input_filename = "test.cnf"
 
-with cd(args.sut_path):
+while i < 2:
+    # Generate fuzzed input
+    create_fuzzing_input(input_filename)
 
-    print(os.getcwd())
+    # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
+    # then writes the sanitizer and gcov output to files
+    subprocess.run('./run_and_get_gcov.sh', shell=True)
 
-    while i < 2:
-        # Generate fuzzed input
-        input_filename = "test.cnf"
-        create_fuzzing_input(input_filename)
+    # Done with files, so I can close them
+    g = open('gcov_output.txt', 'r')
+    parsed_gcov_info = parse_gcov_info(g.read())
+    g.close()
+    print(parsed_gcov_info)
 
-        # Run the SUT with fuzzed input, writing the output and the sanitizer error messages to a file
-        g = open('run_and_get_gcov.sh', "w")
-        g.write(command)
-        g.close()
-        subprocess.run(['chmod', '+x', './run_and_get_gcov.sh'])
-        subprocess.run('./run_and_get_gcov.sh', shell=True)
-        
-        # Done with files, so I can close them
-        g.close()
-        #h.close()
+    i = i + 1
 
-        i = i + 1
-
-    # After last fuzzer iteration, remove test.cnf.
-    os.remove("test.cnf")
+# After last fuzzer iteration, remove test.cnf.
+os.remove(input_filename)
 

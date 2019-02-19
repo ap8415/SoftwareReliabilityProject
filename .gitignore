@@ -3,3 +3,5 @@ sat
 san_out_*
 *.gcda
 *.gcno
+*.c.gcov
+
