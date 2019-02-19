@@ -1,4 +1,6 @@
 import random
+import string
+
 
 class SolverInput:
     """
@@ -47,3 +49,33 @@ class SolverInput:
             input_1.clauses + input_2.clauses)
         combined_input.clauses = input_1.clauses + input_2.clauses
         return combined_input
+
+    '''
+    Returns the DIMACS header, or a malformed header, depending on the boolean parameter 'malformed'.
+    '''
+    def dimacs_header(self):
+        if not self.malformed:
+            return f'p cnf {self.variables} {self.clauses}'
+        else:
+            # Try random malformations, or just random string
+            if random.random() > 0.2:
+                return f'q cnf {self.variables} {self.clauses}'
+            elif random.random() > 0.3:
+                return f'p dnf {self.variables} {self.clauses}'
+            elif random.random() > 0.2:
+                return f'{self.variables} {self.clauses} p cnf'
+            elif random.random() > 0.2:
+                return f'p p cnf {self.variables} {self.clauses}'
+            else:
+                return ''.join(random.choices(string.ascii_uppercase + string.digits, k=random.randint(0, 20)))
+
+    def __str__(self):
+        # First append header
+        string_form = self.dimacs_header() + '\n'
+        for clause in self.clauses:
+            # TODO :add static method, clause(list of ints) -> string
+            for item in clause:
+                string_form = string_form + f'{item} '
+        string_form = string_form + '0\n'
+        return string_form
+

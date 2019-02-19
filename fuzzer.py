@@ -3,11 +3,9 @@ import os
 import random
 import re
 import subprocess
-import shlex
 from contextlib import contextmanager
-
 import generators
-
+from input import SolverInput
 
 @contextmanager
 def cd(newdir):
@@ -20,12 +18,7 @@ def cd(newdir):
 
 
 def generate_input(variables, clauses, malformed):
-    input = generators.dimacs_header(variables, clauses, malformed)
-    input = input + '\n'
-    for i in range(0, clauses):
-        input = input + generators.dimacs_clause(variables, random.randint(1, variables), True)
-        input = input + '\n'
-    return input
+    return SolverInput(variables, clauses)
 
 
 def create_fuzzing_input(input_file):
@@ -84,7 +77,7 @@ def parse_gcov_info(gcov_output):
 
 input_filename = "test.cnf"
 
-while i < 2:
+while i < 50:
     # Generate fuzzed input
     create_fuzzing_input(input_filename)
 
