@@ -59,7 +59,7 @@ i = 1
 # Regexes used to parse gcov
 gcov_main_regex = re.compile(r"file '\w+\.c'\nlines executed:\d{1,3}\.\d{0,2}% of \d+", re.I)
 gcov_sourcefile_regex = re.compile(r"'\w+\.c'")
-gcov_coverage_percent_regex = re.compile(r"\d{1,3}%\d{0,2}")
+gcov_coverage_percent_regex = re.compile(r"\d{1,3}\.\d{0,2}%")
 
 
 def parse_gcov_info(gcov_output):
@@ -71,9 +71,12 @@ def parse_gcov_info(gcov_output):
     output_per_file = gcov_main_regex.finditer(gcov_output)
     file_coverage = {}
     for file_info in output_per_file:
+        print(file_info.group())
         # Get filename via regex, remove the (redundant) leading ' and trailing .c'
-        filename = gcov_sourcefile_regex.match(file_info.group()).group()[1:-3]
-        percent_coverage = gcov_coverage_percent_regex.match(file_info.group())
+        filename = gcov_sourcefile_regex.search(file_info.group()).group()[1:-3]
+        print(f'FILENAME IS {filename}')
+        percent_coverage = gcov_coverage_percent_regex.search(file_info.group()).group()
+        print(f'COVERAGE IS {percent_coverage}')
         percent_coverage = float(percent_coverage[:-1])
         file_coverage[filename] = percent_coverage
     return file_coverage
@@ -87,7 +90,7 @@ while i < 2:
 
     # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
     # then writes the sanitizer and gcov output to files
-    subprocess.run('./run_and_get_gcov.sh', shell=True)
+    subprocess.run(f'./run_and_get_gcov.sh {args.sut_path}', shell=True)
 
     # Done with files, so I can close them
     g = open('gcov_output.txt', 'r')
