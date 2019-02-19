@@ -1,0 +1,32 @@
+File 'formula.c'
+Lines executed:69.47% of 321
+Creating 'formula.c.gcov'
+
+File 'conflict.c'
+Lines executed:81.19% of 101
+Creating 'conflict.c.gcov'
+
+File 'sat.c'
+Lines executed:71.43% of 7
+Creating 'sat.c.gcov'
+
+File 'solver.c'
+Lines executed:95.96% of 198
+Creating 'solver.c.gcov'
+
+File 'literal.c'
+Lines executed:90.91% of 22
+Creating 'literal.c.gcov'
+
+File 'clause.c'
+Lines executed:64.81% of 162
+Creating 'clause.c.gcov'
+
+File 'decision.c'
+Lines executed:92.96% of 142
+Creating 'decision.c.gcov'
+
+File 'watched_clause.c'
+Lines executed:31.82% of 66
+Creating 'watched_clause.c.gcov'
+

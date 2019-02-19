@@ -79,26 +79,29 @@ def parse_gcov_info(gcov_output):
     return file_coverage
 
 
+command = '''!/bin/bash \n
+           ./runsat.sh test.cnf &> san_output.txt \n
+           find -name \'*.c\' -exec gcov {} \; > gcov_output.txt''' 
+
 with cd(args.sut_path):
-    while i < 50:
+
+    print(os.getcwd())
+
+    while i < 2:
         # Generate fuzzed input
         input_filename = "test.cnf"
         create_fuzzing_input(input_filename)
 
         # Run the SUT with fuzzed input, writing the output and the sanitizer error messages to a file
-        g = open('san_output', "w")
-        subprocess.run(['runsat.sh', input_filename], stdout=g, stderr=g)
-
-        # Obtain gcov info for the given file
-        h = open('gcov_info', "w+")
-        subprocess.run(['gcov', '*.c'], stdout=h)
-
-        # Obtain line coverage for all of the files
-        sut_coverage = parse_gcov_info(h.read())
-
+        g = open('run_and_get_gcov.sh', "w")
+        g.write(command)
+        g.close()
+        subprocess.run(['chmod', '+x', './run_and_get_gcov.sh'])
+        subprocess.run('./run_and_get_gcov.sh', shell=True)
+        
         # Done with files, so I can close them
         g.close()
-        h.close()
+        #h.close()
 
         i = i + 1
 

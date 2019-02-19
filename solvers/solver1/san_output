@@ -1,0 +1,131 @@
+
+=================================================================
+==18748==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 42 byte(s) in 2 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x56173135051c in ltoa /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/literal.c:41
+    #2 0x561731360eb4 in report /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:424
+    #3 0x5617313611eb in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:440
+    #4 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #5 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #6 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 40 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x5617313563be in init_node /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:9
+    #2 0x5617313577f5 in insert_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:66
+    #3 0x56173135790e in insert_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:71
+    #4 0x56173135790e in insert_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:71
+    #5 0x5617313614fd in init_unassigned_table /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:27
+    #6 0x5617313629e3 in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:150
+    #7 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #8 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #9 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #10 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 40 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x5617313563be in init_node /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:9
+    #2 0x5617313577f5 in insert_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:66
+    #3 0x5617313614fd in init_unassigned_table /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:27
+    #4 0x5617313629e3 in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:150
+    #5 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #6 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #7 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #8 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 40 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x5617313563be in init_node /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:9
+    #2 0x5617313577f5 in insert_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:66
+    #3 0x56173135790e in insert_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:71
+    #4 0x56173135790e in insert_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/decision.c:71
+    #5 0x561731361547 in init_unassigned_table /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:31
+    #6 0x5617313629e3 in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:150
+    #7 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #8 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #9 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #10 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 16 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x56173136851a in add_w_clause /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:519
+    #2 0x56173136352a in init_formula_from_clauses /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:207
+    #3 0x561731362a9c in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:156
+    #4 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #5 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #6 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #7 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 16 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x561731362441 in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:129
+    #2 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #3 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #4 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #5 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 16 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x56173136520c in assign /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:311
+    #2 0x56173135cf63 in bcp /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:134
+    #3 0x561731360610 in solve /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:380
+    #4 0x5617313611ba in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:439
+    #5 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #6 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #7 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 16 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x561731350d78 in init_clause_empty /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/clause.c:41
+    #2 0x5617313624b3 in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:133
+    #3 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #4 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #5 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #6 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Direct leak of 8 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x56173135012f in init_literal /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/literal.c:14
+    #2 0x56173135096d in init_chained_literal_next_from_int /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/clause.c:26
+    #3 0x5617313508d0 in init_chained_literal_from_int /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/clause.c:13
+    #4 0x561731352b74 in add_int /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/clause.c:256
+    #5 0x5617313627b1 in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:145
+    #6 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #7 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #8 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #9 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Indirect leak of 16 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x56173136520c in assign /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:311
+    #2 0x561731360080 in plp /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:326
+    #3 0x561731360565 in solve /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:366
+    #4 0x5617313611ba in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:439
+    #5 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #6 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #7 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Indirect leak of 16 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x56173136851a in add_w_clause /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:519
+    #2 0x5617313634e9 in init_formula_from_clauses /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:206
+    #3 0x561731362a9c in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:156
+    #4 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #5 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #6 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #7 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+Indirect leak of 16 byte(s) in 1 object(s) allocated from:
+    #0 0x7f95b86ebb50 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.4+0xdeb50)
+    #1 0x56173135095f in init_chained_literal_next_from_int /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/clause.c:23
+    #2 0x5617313508d0 in init_chained_literal_from_int /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/clause.c:13
+    #3 0x561731352b74 in add_int /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/clause.c:256
+    #4 0x5617313627b1 in init_formula_from_file /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/formula.c:145
+    #5 0x5617313610ea in sat /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/solver.c:433
+    #6 0x561731356238 in proble4 /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:463
+    #7 0x56173135631b in main /home/andreibpuiu/reliability/SoftwareReliabilityProject/solvers/solver1/sat.c:473
+    #8 0x7f95b751cb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+SUMMARY: AddressSanitizer: 282 byte(s) leaked in 13 allocation(s).
