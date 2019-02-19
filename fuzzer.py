@@ -8,15 +8,15 @@ from contextlib import contextmanager
 
 import generators
 
-#
-# @contextmanager
-# def cd(newdir):
-#     prevdir = os.getcwd()
-#     os.chdir(os.path.expanduser(newdir))
-#     try:
-#         yield
-#     finally:
-#         os.chdir(prevdir)
+
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
 
 
 def generate_input(variables, clauses, malformed):
@@ -61,6 +61,7 @@ gcov_main_regex = re.compile(r"file '\w+\.c'\nlines executed:\d{1,3}\.\d{0,2}% o
 gcov_sourcefile_regex = re.compile(r"'\w+\.c'")
 gcov_coverage_percent_regex = re.compile(r"\d{1,3}%\d{0,2}")
 
+
 def parse_gcov_info(gcov_output):
     """
     Parses the gcov output to a mapping, giving the coverage of each of the SUT files.
@@ -77,27 +78,30 @@ def parse_gcov_info(gcov_output):
         file_coverage[filename] = percent_coverage
     return file_coverage
 
-while i < 50:
-    # Generate fuzzed input
-    input_filename = "test.cnf"
-    create_fuzzing_input(input_filename)
 
-    # Run the SUT with fuzzed input, writing the output and the sanitizer error messages to a file
-    g = open('san_output', "w")
-    subprocess.run([f'{args.sut_path}/runsat.sh', input_filename], stdout=g, stderr=g)
+with cd(args.sut_path):
+    while i < 50:
+        # Generate fuzzed input
+        input_filename = "test.cnf"
+        create_fuzzing_input(input_filename)
 
-    # Obtain gcov info for the given file
-    h = open('gcov_info', "r+")
-    subprocess.run(['gcov', f'{args.sut_path}/*.c'], stdout=h)
+        # Run the SUT with fuzzed input, writing the output and the sanitizer error messages to a file
+        g = open('san_output', "w")
+        subprocess.run(['runsat.sh', input_filename], stdout=g, stderr=g)
 
-    # Obtain line coverage for all of the files
-    sut_coverage = parse_gcov_info(h.read())
+        # Obtain gcov info for the given file
+        h = open('gcov_info', "w+")
+        subprocess.run(['gcov', '*.c'], stdout=h)
 
-    # Done with files, so I can close them
-    g.close()
-    h.close()
+        # Obtain line coverage for all of the files
+        sut_coverage = parse_gcov_info(h.read())
 
-    i = i + 1
+        # Done with files, so I can close them
+        g.close()
+        h.close()
 
-# After last fuzzer iteration, remove test.cnf.
-os.remove("test.cnf")
+        i = i + 1
+
+    # After last fuzzer iteration, remove test.cnf.
+    os.remove("test.cnf")
+
