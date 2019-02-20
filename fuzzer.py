@@ -4,7 +4,6 @@ import random
 import re
 import subprocess
 from contextlib import contextmanager
-import generators
 from input import SolverInput
 
 @contextmanager
@@ -36,28 +35,40 @@ def create_fuzzing_input(input_file):
     f.close()
     return inp
 
-def get_gcov_bitvector():
-    """
-    Returns a map from source file names to bit vectors, where each bit vector represents a line in the
-    gcov report for the source file.
-    :return:
-    """
 
+def get_gcov_input_counts(prev_count, curr_count):
+    """
+    Computes the lines in the SUT source code covered by the last fuzzer input run.
+    Each source file in the SUT is represented by an array, where each element represents a line in the
+    gcov report for the source file, and its value is the number of times the line was called during the run.
+    It does so by comparing the gcov counts from the current iteration (i.e. after the last input) and those from
+    the previous iteration (i.e. before the last input).
+    :param prev_count: gcov counts before the last run input
+    :param curr_count: gcov counts after the last run input
+    :return: a map from source file names to the arrays described above
+    """
+    gcov_bitvectors = {}
+    for file in prev_count.keys():
+        # Arrays for the same file should have same length.
+        length = len(prev_count[file])
+        assert length == len(curr_count[file])
+        gcov_bitvectors[file] = [curr_count[file][i] - prev_count[file][i] for i in range(0, length)]
+    return gcov_bitvectors
 
 
 def get_gcov_counts(source_file_names):
     """
-    Parses the gcov reports for a set of source files.
-    Returns a map from source file names to arrays, where each array stores the number of times each line in the gcov
-    report was hit.
+    Parses the gcov reports for a set of source files, and for each source file, computes an array, where each element
+    represents a line in the gcov report for the file, and its value is the total number of times the line has been
+    called during execution.
     :param source_file_names: a list of the source file names.
-    :return:
+    :return: a map from source file names to the arrays described above
     """
     gcov_counts = {}
     for file_name in source_file_names:
         f = open(file_name, "r")
         iterations = []
-        for line in f.read().split('\n'):
+        for line in f.read().splitlines():
             # Extracts counts
             line = line.strip().split()[0][:-1]
             if line.isdigit():
@@ -71,19 +82,6 @@ def get_gcov_counts(source_file_names):
     return gcov_counts
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("sut_path", help="Absolute or Relative path to the SUT")
-parser.add_argument("inputs_path", help="Absolute or Relative path to the inputs. Ignored in UB mode.")
-parser.add_argument("mode", help="The mode in which the fuzzer is run. Can be either 'ub' or 'func'; all other"
-                                 "values are rejected.")
-parser.add_argument("seed", help="Seed for the random number generator.")
-args = parser.parse_args()
-print(args.sut_path)
-
-# TODO: perform args check
-# TODO: verify that this works with both absolute and relative paths.
-
-i = 1
 # Regexes used to parse gcov
 gcov_main_regex = re.compile(r"file '\w+\.c'\nlines executed:\d{1,3}\.\d{0,2}% of \d+", re.I)
 gcov_sourcefile_regex = re.compile(r"'\w+\.c'")
@@ -110,6 +108,19 @@ def parse_gcov_info(gcov_output):
     return file_coverage
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("sut_path", help="Absolute or Relative path to the SUT")
+parser.add_argument("inputs_path", help="Absolute or Relative path to the inputs. Ignored in UB mode.")
+parser.add_argument("mode", help="The mode in which the fuzzer is run. Can be either 'ub' or 'func'; all other"
+                                 "values are rejected.")
+parser.add_argument("seed", help="Seed for the random number generator.")
+args = parser.parse_args()
+print(args.sut_path)
+
+# TODO: perform args check
+# TODO: verify that this works with both absolute and relative paths.
+
+i = 1
 input_filename = "test.cnf"
 
 while i < 5000:
@@ -119,7 +130,7 @@ while i < 5000:
     # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
     # then writes the sanitizer and gcov output to files
     try:
-        subprocess.run(f'./run_and_get_gcov.sh {args.sut_path}', timeout=10, shell=True)
+        subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0', timeout=10, shell=True)
         # Done with files, so I can close them
         g = open('gcov_output.txt', 'r')
         gcov_filenames = g.read().split()
