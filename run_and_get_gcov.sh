@@ -13,7 +13,16 @@ cp ${FUZZER_DIR}/test.cnf test.cnf
 
 # Run the SUT, generate coverage
 ./runsat.sh test.cnf &> san_output.txt
-find -name "*.c" -exec gcov {} \; > gcov_output.txt
+
+C_FILES=$(find -name "*.c")
+echo ${C_FILES}
+for filename in ${C_FILES}
+do
+    echo ${filename} \n\n\n\n
+    gcov ${filename} # produces filename.gcov file
+    GCOVNAME="${filename}.gcov" > gcov_output.txt
+    cp ${GCOVNAME} ${FUZZER_DIR}/${GCOVNAME}
+done
 
 # Move files back to fuzzer for analysis, perform cleanup
 cp san_output.txt ${FUZZER_DIR}/san_output.txt

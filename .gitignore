@@ -6,3 +6,4 @@ san_out_*
 *.c.gcov
 *.cnf
 *.txt
+__pycache__
