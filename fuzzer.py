@@ -82,31 +82,82 @@ def get_gcov_counts(source_file_names):
     return gcov_counts
 
 
-# Regexes used to parse gcov
-gcov_main_regex = re.compile(r"file '\w+\.c'\nlines executed:\d{1,3}\.\d{0,2}% of \d+", re.I)
-gcov_sourcefile_regex = re.compile(r"'\w+\.c'")
-gcov_coverage_percent_regex = re.compile(r"\d{1,3}\.\d{0,2}%")
+# Initialize globals
+
+# A list of tuples, which pairs each input with its coverage metrics.
+tracked_inputs = []
+interesting_inputs = []
 
 
-def parse_gcov_info(gcov_output):
+def fuzz():
     """
-    Parses the gcov output to a mapping, giving the coverage of each of the SUT files.
-    :param gcov_output: the output produced by gcov by some SUT for some input
-    :return: a (file name, coverage) mapping
+    Main fuzzing method.
+    Generates an input, then obtains its coverage and sanitizer outputs.
+    For sanitizer outputs, the method classifies the discovered bug, and compares it to the previously found bugs,
+    with the aim of finding diverse and severe flaws.
+    For coverage outputs, the method
     """
-    output_per_file = gcov_main_regex.finditer(gcov_output)
-    file_coverage = {}
-    for file_info in output_per_file:
-        print(file_info.group())
-        # Get filename via regex, remove the (redundant) leading ' and trailing .c'
-        filename = gcov_sourcefile_regex.search(file_info.group()).group()[1:-3]
-        print(f'FILENAME IS {filename}')
-        percent_coverage = gcov_coverage_percent_regex.search(file_info.group()).group()
-        print(f'COVERAGE IS {percent_coverage}')
-        percent_coverage = float(percent_coverage[:-1])
-        file_coverage[filename] = percent_coverage
-    return file_coverage
+    global curr_gcov_counts
+    global prev_gcov_counts
+    global tracked_inputs
 
+    # Generate fuzzed input
+    curr_input = create_fuzzing_input(input_filename)
+
+    # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
+    # then writes the sanitizer and gcov output to files
+    try:
+        subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0', timeout=10, shell=True)
+        # Done with files, so I can close them
+        g = open('gcov_output.txt', 'r')
+        curr_gcov_counts = get_gcov_counts(g.read().split())
+        g.close()
+
+        gcov_input_counts = get_gcov_input_counts(prev_gcov_counts, curr_gcov_counts)
+        prev_gcov_counts = curr_gcov_counts
+        tracked_inputs[curr_input] = gcov_input_counts
+
+    except subprocess.TimeoutExpired:
+        print("TIMEOUT OCCURRED!")
+
+
+def augment():
+    """
+    Inspects the current pool of inputs, and saves them to interesting_inputs.
+    If interesting_inputs becomes too big, the method also evicts the oldest inputs.
+    """
+    global interesting_inputs
+    global curr_gcov_counts
+    global tracked_inputs
+    next_interesting_inputs = set()
+
+    # Determine largest line count for every file.
+    # We disregard lines which have more than 1% of the maximum count, as they are reachable enough by regular
+    # fuzzed tests.
+    max_counts = {}
+    for file in curr_gcov_counts.keys():
+        max_counts[file] = max(curr_gcov_counts[file])
+
+    for file in curr_gcov_counts.keys():
+        for i in range(0, curr_gcov_counts[file]):
+            if curr_gcov_counts[file][i] < 0.01 * max_counts[file]:
+                max_count = 0
+                best_input = None
+                for input, counts in tracked_inputs:
+                    if counts[i] > max_count:
+                        max_count = counts[i]
+                        best_input = input
+                if best_input is not None:
+                    next_interesting_inputs.add(best_input)
+
+    interesting_inputs = interesting_inputs + list(next_interesting_inputs)
+    tracked_inputs = []
+    if len(interesting_inputs) > 200:
+        interesting_inputs = interesting_inputs[-200:]
+    print(len(interesting_inputs))
+    
+
+# Parse args
 
 parser = argparse.ArgumentParser()
 parser.add_argument("sut_path", help="Absolute or Relative path to the SUT")
@@ -115,32 +166,25 @@ parser.add_argument("mode", help="The mode in which the fuzzer is run. Can be ei
                                  "values are rejected.")
 parser.add_argument("seed", help="Seed for the random number generator.")
 args = parser.parse_args()
-print(args.sut_path)
-
 # TODO: perform args check
 # TODO: verify that this works with both absolute and relative paths.
 
-i = 1
 input_filename = "test.cnf"
-
-while i < 5000:
-    # Generate fuzzed input
-    create_fuzzing_input(input_filename)
-
-    # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
-    # then writes the sanitizer and gcov output to files
-    try:
-        subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0', timeout=10, shell=True)
-        # Done with files, so I can close them
-        g = open('gcov_output.txt', 'r')
-        gcov_filenames = g.read().split()
-        get_gcov_counts(gcov_filenames)
-        g.close()
-    except subprocess.TimeoutExpired as e:
-        print("TIMEOUT OCCURRED!")
-
-    i = i + 1
-
-# After last fuzzer iteration, remove test.cnf.
+# If test.cnf is already present, clean it up first.
 os.remove(input_filename)
 
+# Get initial zero values for coverage so that we can compute rolling coverage for each test input
+subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 1', timeout=10, shell=True)
+g = open('gcov_output.txt', 'r')
+gcov_filenames = g.read().split()
+prev_gcov_counts = get_gcov_counts(gcov_filenames)
+curr_gcov_counts = {}
+g.close()
+
+while True:
+    # Run the fuzzing process.
+    # 2000 times is enough to keep the number of saved inputs relatively small, but still interesting enough.
+    for _ in range(0, 2000):
+        fuzz()
+    # Augment interesting inputs pool.
+    augment()

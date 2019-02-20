@@ -12,7 +12,8 @@ class SolverInput:
      - generate randomized inputs, according to parameters which we set such as
        number of variables, number of clauses, format etc.
      - combine inputs into a larger input in order to try and maximize coverage
-     - perform various kinds of metamorphic transformations on inputs.
+     - perform various kinds of metamorphic transformations on inputs.#
+    This class is treated as immutable; none of its internal members are changed after creation.
     """
 
     def __init__(self, variables, no_of_clauses):
@@ -80,4 +81,7 @@ class SolverInput:
             string_form = string_form + '0\n'
         print('\n\n\n' + string_form + '\n\n\n')
         return string_form
+
+    def __hash__(self):
+        return hash(self.__str__())
 
