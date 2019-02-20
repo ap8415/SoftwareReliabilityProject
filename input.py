@@ -20,6 +20,7 @@ class SolverInput:
         self.no_of_clauses = no_of_clauses
         self.malformed = False
         self.clauses = []
+        self.generate_input()
 
     def generate_input(self):
         self.clauses = [self.generate_clause(random.randint(1, self.variables))
@@ -55,17 +56,17 @@ class SolverInput:
     '''
     def dimacs_header(self):
         if not self.malformed:
-            return f'p cnf {self.variables} {self.clauses}'
+            return f'p cnf {self.variables} {self.no_of_clauses}'
         else:
             # Try random malformations, or just random string
             if random.random() > 0.2:
-                return f'q cnf {self.variables} {self.clauses}'
+                return f'q cnf {self.variables} {self.no_of_clauses}'
             elif random.random() > 0.3:
-                return f'p dnf {self.variables} {self.clauses}'
+                return f'p dnf {self.variables} {self.no_of_clauses}'
             elif random.random() > 0.2:
-                return f'{self.variables} {self.clauses} p cnf'
+                return f'{self.variables} {self.no_of_clauses} p cnf'
             elif random.random() > 0.2:
-                return f'p p cnf {self.variables} {self.clauses}'
+                return f'p p cnf {self.variables} {self.no_of_clauses}'
             else:
                 return ''.join(random.choices(string.ascii_uppercase + string.digits, k=random.randint(0, 20)))
 
@@ -76,6 +77,7 @@ class SolverInput:
             # TODO :add static method, clause(list of ints) -> string
             for item in clause:
                 string_form = string_form + f'{item} '
-        string_form = string_form + '0\n'
+            string_form = string_form + '0\n'
+        print('\n\n\n' + string_form + '\n\n\n')
         return string_form
 

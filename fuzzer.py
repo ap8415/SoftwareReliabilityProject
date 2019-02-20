@@ -24,16 +24,17 @@ def generate_input(variables, clauses, malformed):
 def create_fuzzing_input(input_file):
     """
     Randomly generates all the properties of the fuzzed input(no. of variables, clauses etc).
-    Then, generates an input based on those properties.
-    Finally, it saves the input in input_file, from which the SUT will read it.
-    TODO: perhaps return the randomly generated parameters, so that they can be used in an analysis.
+    Then, generates a SolverInput instance, representing an input based on those properties.
+    It then saves the input in text form in input_file, from which the SUT will read it.
+    Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
     """
-    variables = random.randint(1, 10)
-    clauses = random.randint(1, variables * 3)
-    input = generate_input(variables, clauses, random.random() > 0.95)
+    variables = random.randint(1, 30)
+    clauses = random.randint(1, variables * 5)
+    inp = generate_input(variables, clauses, random.random() > 0.95)
     f = open(input_file, "w")
-    f.write(input)
+    f.write(str(inp))
     f.close()
+    return inp
 
 
 parser = argparse.ArgumentParser()
@@ -77,19 +78,22 @@ def parse_gcov_info(gcov_output):
 
 input_filename = "test.cnf"
 
-while i < 50:
+while i < 5000:
     # Generate fuzzed input
     create_fuzzing_input(input_filename)
 
     # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
     # then writes the sanitizer and gcov output to files
-    subprocess.run(f'./run_and_get_gcov.sh {args.sut_path}', shell=True)
+    try:
+        subprocess.run(f'./run_and_get_gcov.sh {args.sut_path}', timeout=10, shell=True)
+        # Done with files, so I can close them
+        g = open('gcov_output.txt', 'r')
+        parsed_gcov_info = parse_gcov_info(g.read())
+        g.close()
+        print(parsed_gcov_info)
 
-    # Done with files, so I can close them
-    g = open('gcov_output.txt', 'r')
-    parsed_gcov_info = parse_gcov_info(g.read())
-    g.close()
-    print(parsed_gcov_info)
+    except TimeoutExpired as e:
+        print("TIMEOUT OCCURRED!")
 
     i = i + 1
 

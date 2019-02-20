@@ -4,4 +4,5 @@ san_out_*
 *.gcda
 *.gcno
 *.c.gcov
-
+*.cnf
+*.txt
