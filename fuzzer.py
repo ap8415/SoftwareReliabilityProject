@@ -36,6 +36,40 @@ def create_fuzzing_input(input_file):
     f.close()
     return inp
 
+def get_gcov_bitvector():
+    """
+    Returns a map from source file names to bit vectors, where each bit vector represents a line in the
+    gcov report for the source file.
+    :return:
+    """
+
+
+
+def get_gcov_counts(source_file_names):
+    """
+    Parses the gcov reports for a set of source files.
+    Returns a map from source file names to arrays, where each array stores the number of times each line in the gcov
+    report was hit.
+    :param source_file_names: a list of the source file names.
+    :return:
+    """
+    gcov_counts = {}
+    for file_name in source_file_names:
+        f = open(file_name, "r")
+        iterations = []
+        for line in f.read().split('\n'):
+            # Extracts counts
+            line = line.strip().split()[0][:-1]
+            if line.isdigit():
+                # Then line has been hit
+                iterations.append(int(line))
+            else:
+                # Then line hasn't been hit, or does not contain code (e.g. lines with only curly braces)
+                iterations.append(0)
+        gcov_counts[file_name] = iterations
+    print(gcov_counts)
+    return gcov_counts
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("sut_path", help="Absolute or Relative path to the SUT")
@@ -88,11 +122,10 @@ while i < 5000:
         subprocess.run(f'./run_and_get_gcov.sh {args.sut_path}', timeout=10, shell=True)
         # Done with files, so I can close them
         g = open('gcov_output.txt', 'r')
-        parsed_gcov_info = parse_gcov_info(g.read())
+        gcov_filenames = g.read().split()
+        get_gcov_counts(gcov_filenames)
         g.close()
-        print(parsed_gcov_info)
-
-    except TimeoutExpired as e:
+    except subprocess.TimeoutExpired as e:
         print("TIMEOUT OCCURRED!")
 
     i = i + 1

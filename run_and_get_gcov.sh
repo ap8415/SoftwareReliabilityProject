@@ -15,12 +15,11 @@ cp ${FUZZER_DIR}/test.cnf test.cnf
 ./runsat.sh test.cnf &> san_output.txt
 
 C_FILES=$(find -name "*.c")
-echo ${C_FILES}
 for filename in ${C_FILES}
 do
-    echo ${filename} \n\n\n\n
     gcov ${filename} # produces filename.gcov file
-    GCOVNAME="${filename}.gcov" > gcov_output.txt
+    GCOVNAME="${filename}.gcov"
+    "${GCOVNAME} " > gcov_output.txt
     cp ${GCOVNAME} ${FUZZER_DIR}/${GCOVNAME}
 done
 
