@@ -32,3 +32,21 @@ def dimacs_clause(variables, total, nontrivial = True):
             available.remove(-next)
         clause = clause + f'{next} '
     return clause + '0'
+
+
+def generate_clause(variables, clause_length, redundant=False):
+    # If not redundant, clause length must be at most
+    # the number of variables for the code to work.
+    if not redundant:
+        assert (clause_length <= variables)
+    available = list(range(variables, 0)) + list(range(1, variables + 1))
+    clause = []
+    for i in range(0, clause_length):
+        next = available[random.randint(0, len(available) - 1)]
+        # If we want the clause to be non-redundant (i.e no A & ¬A, or A & A type expressions),
+        # we remove the variable and its negation from the pool of choices.
+        if not redundant:
+            available.remove(next)
+            available.remove(-next)
+        clause.append(next)
+    return clause

@@ -1,6 +1,8 @@
 import random
 import string
 
+import generators
+
 
 class SolverInput:
     """
@@ -16,46 +18,37 @@ class SolverInput:
     This class is treated as immutable; none of its internal members are changed after creation.
     """
 
-    def __init__(self, variables, no_of_clauses):
+    @staticmethod
+    def create_input(variables, no_of_clauses):
+        """
+        Factory method to generate a new random input.
+        :param variables: number of variables
+        :param no_of_clauses: number of clauses
+        :return: a new random input
+        """
+        return SolverInput(variables, SolverInput.generate_clauses(variables, no_of_clauses))
+
+    def __init__(self, variables, clauses):
         self.variables = variables
-        self.no_of_clauses = no_of_clauses
         self.malformed = False
-        self.clauses = []
-        self.generate_input()
-
-    def generate_input(self):
-        self.clauses = [self.generate_clause(random.randint(1, self.variables))
-                        for _ in range(0, self.no_of_clauses)]
-
-    def generate_clause(self, clause_length, redundant=False):
-        # If not redundant, clause length must be at most
-        # the number of variables for the code to work.
-        if not redundant:
-            assert(clause_length <= self.variables)
-        available = list(range(-self.variables, 0)) + list(range(1, self.variables + 1))
-        clause = []
-        for i in range(0, clause_length):
-            next = available[random.randint(0, len(available) - 1)]
-            # If we want the clause to be non-redundant (i.e no A & ¬A, or A & A type expressions),
-            # we remove the variable and its negation from the pool of choices.
-            if not redundant:
-                available.remove(next)
-                available.remove(-next)
-            clause.append(next)
-        return clause
+        self.clauses = clauses
+        self.no_of_clauses = len(clauses)
 
     @staticmethod
-    def combine(input_1, input_2):
-        combined_input = SolverInput(
-            max(input_1.variables, input_2.variables),
-            input_1.clauses + input_2.clauses)
-        combined_input.clauses = input_1.clauses + input_2.clauses
-        return combined_input
+    def generate_clauses(variables, no_of_clauses):
+        return [generators.generate_clause(variables, random.randint(1, variables))
+                for _ in range(0, no_of_clauses)]
 
-    '''
-    Returns the DIMACS header, or a malformed header, depending on the boolean parameter 'malformed'.
-    '''
+    def get_clauses(self):
+        return self.clauses
+
+    def get_variables(self):
+        return self.variables
+
     def dimacs_header(self):
+        """
+        Returns the DIMACS header, or a malformed header, depending on the boolean parameter 'malformed'.
+        """
         if not self.malformed:
             return f'p cnf {self.variables} {self.no_of_clauses}'
         else:
@@ -83,4 +76,3 @@ class SolverInput:
 
     def __hash__(self):
         return hash(self.__str__())
-
