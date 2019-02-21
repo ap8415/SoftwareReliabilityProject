@@ -381,7 +381,7 @@ def create_follow_up_tests(file_name):
     # If the input is deemed too big, such that running a transformed version of it in the SUT will take too long,
     # or if we can't find 'interesting' inputs anymore, we simply add transformed inputs up to the 50 limit.
     while len(interesting_inputs) < 50:
-        new_input, sat_map = produce_transformed_input(input)
+        new_input, sat_map = produce_transformed_input(input, {"SAT": "SAT", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"})
         interesting_inputs.append(new_input)
         followup_expectations.append(sat_map)
 
