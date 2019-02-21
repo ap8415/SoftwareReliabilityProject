@@ -137,7 +137,7 @@ def classify_undefined_behaviours():
 
     return undefined_behaviours
 
-undef_beh_set = set()
+undef_beh_list = []
 
 def fuzz():
     """
@@ -151,7 +151,7 @@ def fuzz():
     global prev_gcov_counts
     global tracked_inputs
     global initial
-    global undef_beh_set
+    global undef_beh_list
 
     # Generate fuzzed input
     curr_input = create_fuzzing_input(input_filename)
@@ -170,8 +170,15 @@ def fuzz():
         prev_gcov_counts = curr_gcov_counts
         tracked_inputs.append((curr_input, gcov_input_counts))
 
-        undef_beh_set.add(classify_undefined_behaviours())
-        print(len(undef_beh_set))
+        new_beh = classify_undefined_behaviours()
+
+        seen_before = False
+        for beh in undef_beh_list:
+            if beh == new_beh:
+                seen_before = True
+        if not seen_before:
+            undef_beh_list.append(new_beh)
+        print(len(undef_beh_list))
     except subprocess.TimeoutExpired:
         print("TIMEOUT OCCURRED!")
 
