@@ -28,19 +28,15 @@ def generate_clause(variables, clause_length, redundant=False):
     if not redundant:
         assert (clause_length <= variables)
     # Limit clause length for big variable sets so that the SUT won't timeout
-    if clause_length > (50000/variables):
-        clause_length = int(50000 / variables)
-    available = list(range(-variables, 0)) + list(range(1, variables + 1))
-    cpav = list(available)
-    clause = []
-    for i in range(0, clause_length):
-        next = available[random.randint(0, len(available) - 1)]
-        # If we want the clause to be non-redundant (i.e no A & ¬A, or A & A type expressions),
-        # we remove the variable and its negation from the pool of choices.
-        if not redundant:
-            available.remove(next)
-            available.remove(-next)
-        clause.append(next)
-    # print(variables)
-    # print(len(clause))
+    if clause_length > (200000/variables):
+        clause_length = int(200000 / variables)
+
+    # Generate clause
+    available = set(range(1, variables + 1))
+    while len(available) > clause_length:
+        available.remove(random.sample(available, 1)[0])
+    clause = list(available)
+    # Randomly flips a few variables in the clause
+    # TODO: determine this coefficient by relation to no of clauses or something
+    clause = [x if random.random() > 0.9 else -x for x in clause]
     return clause
