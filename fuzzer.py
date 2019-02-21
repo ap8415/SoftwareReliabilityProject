@@ -1,49 +1,17 @@
 import argparse
 import os
-import random
 import re
 import subprocess
-import time
-
 import transformations
 from modes import *
 from collections import deque
-from contextlib import contextmanager
 from input import SolverInput
 import numpy.random as nprand
 
 
-def generate_input(variables, clause_params, malformed):
-    return SolverInput.create_input(variables, clause_params)
-
-
-def create_ub_fuzzing_input():
-    """
-    Randomly generates all the properties of the fuzzed input(no. of variables, clauses etc).
-    Then, generates a SolverInput instance, representing an input based on those properties.
-    It then saves the input in text form in input_file, from which the SUT will read it.
-    Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
-    """
-    global mode_variables
-    global mode_clauses
-
-    variables = mode_variables.get_variables()
-    clause_params = mode_clauses.get_clause_parameters()
-
-    inp = generate_input(variables, clause_params, random.random() > 0.99)
-    write_input_to_file(inp)
-
-    return inp
-
-
-def write_input_to_file(input):
-    """
-    Writes an input to the test.cnf file.
-    """
-    input_filename = "test.cnf"
-    f = open(input_filename, "w")
-    f.write(str(input))
-    f.close()
+"""
+Parsing for sanitizer and coverage outputs.
+"""
 
 
 def get_gcov_counts(source_file_names):
@@ -120,21 +88,53 @@ def classify_undefined_behaviours():
     return undefined_behaviours
 
 
-# Initialize globals
+"""
+Methods for fuzzing in ub mode. 
+"""
 
-# A list of tuples, which pairs each input with its coverage metrics.
-interesting_inputs = deque()
+def generate_input(variables, clause_params, malformed):
+    # TODO: delete.
+    return SolverInput.create_input(variables, clause_params)
 
-# Stores the list of undefined behaviours which have been saved by the fuzzer.
-undef_behaviour_list = []
 
-# Stores how many inputs have been produced since an interesting input was detected
-since_last_interesting_input = 0
+def create_ub_fuzzing_input():
+    """
+    Randomly generates all the properties of the fuzzed input(no. of variables, clauses etc).
+    Then, generates a SolverInput instance, representing an input based on those properties.
+    It then saves the input in text form in input_file, from which the SUT will read it.
+    Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
+    """
+    global mode_variables
+    global mode_clauses
 
-mode_variables = None
-mode_clauses = None
-possible_modes_variables = [v for v in ModeVariables]
-possible_modes_clauses = [c for c in ModeClauses]
+    variables = mode_variables.get_variables()
+    clause_params = mode_clauses.get_clause_parameters()
+
+    inp = generate_input(variables, clause_params, random.random() > 0.99)
+
+    combine_with_interesting_input = random.random()
+
+    # Once we have enough inputs qualified as 'interesting' we will a fifth of the time add them to the
+    # randomly generated one.
+    if combine_with_interesting_input > 0.8 and len(interesting_inputs) > 10:
+        random_interesting = interesting_inputs[random.randint(0, len(interesting_inputs) - 1)]
+        if combine_with_interesting_input < 0.9:
+            inp = transformations.combine_disjoint(inp, random_interesting)
+        else:
+            inp = transformations.combine_union(inp, random_interesting)
+
+    write_input_to_file(inp)
+    return inp
+
+
+def write_input_to_file(input):
+    """
+    Writes an input to the test.cnf file.
+    """
+    input_filename = "test.cnf"
+    f = open(input_filename, "w")
+    f.write(str(input))
+    f.close()
 
 
 def select_random_modes():
@@ -159,17 +159,14 @@ def fuzz_ub():
     """
     global curr_gcov_counts
     global prev_gcov_counts
-    global initial
     global undef_behaviour_list
 
     # Generate fuzzed input
     curr_input = create_ub_fuzzing_input()
 
-    print(time.clock() - initial)
-
     # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
     # then writes the sanitizer and gcov output to files
-    fuzz_the_sut = subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0 30', shell=True)
+    fuzz_the_sut = subprocess.run(f'./run_with_sanitizers.sh {args.sut_path} 0 30', shell=True)
     try:
         # If the SUT didn't time out out, the script will return 0, and we can process the information
         fuzz_the_sut.check_returncode()
@@ -183,20 +180,22 @@ def fuzz_ub():
         augment(curr_input)
 
         # Process sanitizer information
-        curr_behaviours = classify_undefined_behaviours()
+        ub_curr = classify_undefined_behaviours()
         # If no undefined behaviour has been found, return
-        if not curr_behaviours:
+        if not ub_curr:
             return
+        else:
+            pos, evictable = compare_against_saved_inputs(ub_curr)
+            if len(undef_behaviour_list < 20) or not evictable:
+                undef_behaviour_list.insert(ub_curr, evictable)
 
-        seen_before = False
-        for beh in undef_behaviour_list:
-            if beh == curr_behaviours:
-                seen_before = True
-        if not seen_before:
-            undef_behaviour_list.append(curr_behaviours)
+                f = open(f'fuzzed-tests/test_{pos}.cnf', 'w')
+                f.write(str(curr_input))
+                f.close()
 
     except subprocess.CalledProcessError:
         # If the SUT timed out, the script will return 1, and an exception is raised by subprocess.
+        # Don't save the input as we want to find undefined behaviour, not functional errors.
         print("TIMEOUT OCCURRED!")
 
 
@@ -233,29 +232,57 @@ def check_for_interesting_input():
     return False
 
 
-# Parse args
+def compare_against_saved_inputs(ub_curr):
+    """
+    Compares the undefined behaviours given as argument to the undefined behaviours seen by the fuzzer previously.
+    Returns a pair of (integer, boolean).
+    The integer is the position at which the input should be inserted in the fuzzed-tests directory:
+    - if it is more interesting than a previously saved one, returns the index of the input which should be overwritten.
+    - else, if there are less than 20 saved inputs, returns the next 'free' index.
+    - otherwise returns -1.
+    The boolean records whether the input, if inserted, should be prone to eviction.
+    """
+    global undef_behaviour_list
 
-parser = argparse.ArgumentParser()
-parser.add_argument("sut_path", help="Absolute or Relative path to the SUT")
-parser.add_argument("inputs_path", help="Absolute or Relative path to the inputs. Ignored in UB mode.")
-parser.add_argument("mode", help="The mode in which the fuzzer is run. Can be either 'ub' or 'func'; all other"
-                                 "values are disregarded.")
-parser.add_argument("seed", help="Seed for the random number generator.")
-args = parser.parse_args()
-# TODO: perform args check
-# TODO: verify that this works with both absolute and relative paths.
+    if len(undef_behaviour_list) < 20:
+        return len(undef_behaviour_list), check_interesting_ub(ub_curr)
+    else:
+        # Find out whether we've saved inputs which produce all of the bugs that the current input produces
+        should_insert = check_interesting_ub(ub_curr)
 
-random.seed(int(args.seed))
+        # If so, try to find an input to evict.
+        if should_insert:
+            for i in range(0, len(undef_behaviour_list)):
+                ub, evictable = undef_behaviour_list[i]
+                if evictable:
+                    return i, False
+                elif not check_interesting_ub(ub):
+                    return i, False
+            # If we've not returned at any point, simply evict at random.
+            return random.randint(0, 19)
+        else:
+            return -1, False
 
-# Get initial zero values for coverage so that we can compute rolling coverage for each test input
-subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 1 0', shell=True)
-g = open('gcov_output.txt', 'r')
-gcov_filenames = g.read().split()
-prev_gcov_counts = get_gcov_counts(gcov_filenames)
-curr_gcov_counts = {}
-g.close()
+def check_interesting_ub(ub_curr):
+    """
+    If called for a list of undefined behaviours corresponding to an input in fuzzed-tests, checks whether it should
+    be evicted or not.
+    If called for a list of undefined behaviours corresponging to an input not in fuzzed-tests, checks whether it
+    should be included or not.
+    """
+    seen_already = True
+    for bug_type, bug_location in ub_curr:
+        bug_seen_already = False
+        for saved_input_ub in undef_behaviour_list:
+            if saved_input_ub is not ub_curr:
+                for saved_bug_type, saved_bug_location in saved_input_ub:
+                    if bug_type == saved_bug_type and bug_location == saved_bug_location:
+                        bug_seen_already = True
+        if not bug_seen_already:
+            seen_already = False
 
-initial = time.clock()
+    return seen_already
+
 
 def parse_input(file_name):
     """
@@ -288,70 +315,29 @@ def parse_input(file_name):
     return SolverInput(variables, clauses)
 
 
-def produce_transformed_input(input, sat, transforms_left=4):
-    """
-    Applies up to transforms_left transformations on the given input.
-    """
-    if transforms_left == 0:
-        return input, sat
-
-    new_input, new_sat = apply_transform(input, sat)
-    if new_input is None:
-        return input, sat
-    elif random.random() > 0.75:
-        return produce_transformed_input(new_input, new_sat, transforms_left - 1)
-    else:
-        return new_input, new_sat
-
-
-def apply_transform(input, sat):
-    """
-    Applies a metamorphic transform to the given input.
-    If none of the transforms produce a non-trivial satisfiability output, returns (None, None).
-    """
-    transforms = random.shuffle(range(0, 5))
-
-    # Uniformly picks a random transformation; if it doesn't produce an acceptable satisfiability output, tries to
-    # move on to the next transform until it runs out of transformations.
-    while transforms:
-        picked_transform = transforms[0]
-        transforms.remove(picked_transform)
-        new_input, followup_sat = [], []
-        if picked_transform == 0:
-            new_input, followup_sat = \
-                transformations.add_random_clauses(input, random.randint(1, len(input.get_clauses())) * 0.5)
-        elif picked_transform == 1:
-            new_input, followup_sat = transformations.add_negated_clauses(input)
-        elif picked_transform == 2:
-            new_input, followup_sat = transformations.disjunct_with_new_variables(input, random.randint(1, input.get_variables() * 0.2))
-        elif picked_transform == 3:
-            new_input, followup_sat = transformations.permute_literals(input)
-        elif picked_transform == 4:
-            new_input, followup_sat = input, sat # TODO
-        combined_sat = {"SAT": followup_sat[sat["SAT"]],
-                        "UNSAT": followup_sat[sat["UNSAT"]],
-                        "UNKNOWN": "UNKNOWN"}
-        if not combined_sat["SAT"] == "UNKNOWN" or not combined_sat["UNSAT"] == "UNKNOWN":
-            return new_input, combined_sat
-
-    return None, None
-    # Choose transform at random.
+"""
+Methods used to perform fuzzing in func mode.
+"""
 
 
 def create_follow_up_tests(file_name):
     """
     Main function for func fuzzing mode.
     Generates 50 test cases for each of the inputs.
-    :param file_name: the input file name
+    :return: Returns a list, where the element at position i represents the expectation for the interesting input at
+    position i in interesting_inputs.
     """
 
     global prev_gcov_counts
     global curr_gcov_counts
     global interesting_inputs
 
+    followup_expectations = []
+
     input = parse_input(file_name)
 
     if input.should_run_fast():
+
         # If the input is small enough, we can invoke the SUT on the follow-up tests,
         # to determine which are worth keeping.
         while len(interesting_inputs) < 50:
@@ -360,10 +346,10 @@ def create_follow_up_tests(file_name):
             if since_last_interesting_input > 15:
                 break
 
-            new_input = produce_transformed_input(input, {"SAT": "SAT", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"})
+            new_input, sat_map = produce_transformed_input(input, {"SAT": "SAT", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"})
             write_input_to_file(new_input)
             # Use 60-second timeout to try follow-up tests.
-            fuzz_the_sut = subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0 60', shell=True)
+            fuzz_the_sut = subprocess.run(f'./run_with_sanitizers.sh {args.sut_path} 0 60', shell=True)
 
             try:
                 # If the SUT didn't time out out, the script will return 0, and we can process the information
@@ -376,6 +362,8 @@ def create_follow_up_tests(file_name):
                 g.close()
 
                 augment(new_input)
+                if since_last_interesting_input == 0:
+                    followup_expectations.append(sat_map)
 
             except subprocess.CalledProcessError:
                 # If the test times out, given that the input is deemed small, it's most likely that
@@ -385,30 +373,125 @@ def create_follow_up_tests(file_name):
     # If the input is deemed too big, such that running a transformed version of it in the SUT will take too long,
     # or if we can't find 'interesting' inputs anymore, we simply add transformed inputs up to the 50 limit.
     while len(interesting_inputs) < 50:
-        interesting_inputs.append(produce_transformed_input(input))
+        new_input, sat_map = produce_transformed_input(input)
+        interesting_inputs.append(new_input)
+        followup_expectations.append(sat_map)
 
+    return followup_expectations
+
+
+def apply_transform(input, sat):
+    """
+    Applies a metamorphic transform to the given input.
+    If none of the transforms produce a non-trivial satisfiability output, returns (None, None).
+    """
+    transforms = random.shuffle(range(0, 4)) # TODO: add fifth transform
+
+    # Uniformly picks a random transformation; if it doesn't produce an acceptable satisfiability output, tries to
+    # move on to the next transform until it runs out of transformations.
+    while transforms:
+        picked_transform = transforms[0]
+        transforms.remove(picked_transform)
+        new_input, followup_sat = [], {}
+        if picked_transform == 0:
+            new_input, followup_sat = \
+                transformations.add_random_clauses(input, random.randint(1, len(input.get_clauses())) * 0.5)
+        elif picked_transform == 1:
+            new_input, followup_sat = transformations.add_negated_clauses(input)
+        elif picked_transform == 2:
+            new_input, followup_sat = \
+                transformations.disjunct_with_new_variables(input, random.randint(1, input.get_variables() * 0.2))
+        elif picked_transform == 3:
+            new_input, followup_sat = transformations.permute_literals(input)
+        elif picked_transform == 4:
+            new_input, followup_sat = input, sat # TODO
+        combined_sat = {"SAT": followup_sat[sat["SAT"]],
+                        "UNSAT": followup_sat[sat["UNSAT"]],
+                        "UNKNOWN": "UNKNOWN"}
+        if not combined_sat["SAT"] == "UNKNOWN" or not combined_sat["UNSAT"] == "UNKNOWN":
+            return new_input, combined_sat
+
+    return None, None
+
+
+def produce_transformed_input(input, sat, transforms_left=4):
+    """
+    Applies up to transforms_left transformations on the given input.
+    Randomly determines whether to chain multiple transforms together.
+    """
+    if transforms_left == 0:
+        return input, sat
+
+    new_input, new_sat = apply_transform(input, sat)
+    if new_input is None:
+        return input, sat
+    elif random.random() > 0.5:
+        return produce_transformed_input(new_input, new_sat, transforms_left - 1)
+    else:
+        return new_input, new_sat
+
+
+# Main fuzzer body.
+
+# Parse args
+parser = argparse.ArgumentParser()
+parser.add_argument("sut_path", help="Absolute or Relative path to the SUT")
+parser.add_argument("inputs_path", help="Absolute or Relative path to the inputs. Ignored in UB mode.")
+parser.add_argument("mode", help="The mode in which the fuzzer is run. Can be either 'ub' or 'func'; all other"
+                                 "values are disregarded.")
+parser.add_argument("seed", help="Seed for the random number generator.")
+args = parser.parse_args()
+random.seed(int(args.seed))
+# TODO: verify that this works with both absolute and relative paths.
+
+# Initialize globals
+
+# A list of tuples, which pairs each input with its coverage metrics.
+interesting_inputs = deque()
+# Stores the list of pairs of the form (ub, evictable), where:
+# - ub stores the undefined behaviours for a particular input which has been saved by the fuzzer.
+# - evictable stores whether the input is prone to eviction.
+undef_behaviour_list = []
+# Stores how many inputs have been produced since an interesting input was detected
+since_last_interesting_input = 0
+# Used to randomize parameters for the input fuzzer
+mode_variables = None
+mode_clauses = None
+possible_modes_variables = [v for v in ModeVariables]
+possible_modes_clauses = [c for c in ModeClauses]
+
+# Get initial zero values for coverage so that we can compute rolling coverage for each input that we run
+subprocess.run(f'./run_with_sanitizers.sh {args.sut_path} 1 0', shell=True)
+g = open('gcov_output.txt', 'r')
+gcov_filenames = g.read().split()
+prev_gcov_counts = get_gcov_counts(gcov_filenames)
+curr_gcov_counts = {}
+g.close()
 
 if args.mode == "ub":
     # Fuzz in ub mode.
     while True:
         fuzz_ub()
-        # Augment interesting inputs pool.
-        print(time.clock() - initial)
 elif args.mode == "func":
     # Fuzz in func mode.
     func_path = "follow-up-tests"
     os.mkdir(func_path)
+    subprocess.run(f'./make_func.sh {args.sut_path}', shell=True)
     subprocess.run(f'./copy_inputs.sh {args.inputs_path}', shell=True)
 
     g = open('inputs.txt', 'r')
-    file_names = g.read().split()
+    files = g.read().split()
 
-    for file_name in file_names:
-        create_follow_up_tests(file_name)
+    def expectation_text_form(expectation):
+        return f'SAT->{expectation["SAT"]}\nUNSAT->{expectation["UNSAT"]}'
+
+    for file in files:
+        expectations = create_follow_up_tests(file)
         for i in range(0, 50):
-            test_file = open(f'follow-up-tests/{file_name}_{i}.cnf', 'w')
-            sat_file = open(f'follow-up-tests/{file_name}_{i}.txt', 'w')
+            test_file = open(f'follow-up-tests/{file}_{i}.cnf', 'w')
+            sat_file = open(f'follow-up-tests/{file}_{i}.txt', 'w')
             test_file.write(str(interesting_inputs[i]))
-            # TODO: write SAT expectation to file
+            sat_file.write(expectation_text_form(expectations[i]))
             test_file.close()
             sat_file.close()
+        interesting_inputs = []
