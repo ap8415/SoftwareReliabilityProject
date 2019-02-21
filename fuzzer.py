@@ -107,8 +107,10 @@ def create_ub_fuzzing_input():
     global mode_variables
     global mode_clauses
 
+    select_random_modes()
+
     variables = mode_variables.get_variables()
-    clause_params = mode_clauses.get_clause_parameters()
+    clause_params = mode_clauses.get_clause_parameters(variables)
 
     inp = generate_input(variables, clause_params, random.random() > 0.99)
 
@@ -143,6 +145,8 @@ def select_random_modes():
     """
     global mode_variables
     global mode_clauses
+
+    print(possible_modes_variables)
 
     mode_variables = nprand.choice(possible_modes_variables, p=[0.15, 0.34, 0.4, 0.1, 0.0095, 0.0005])
     mode_clauses = nprand.choice(possible_modes_clauses, p=[0.3, 0.3, 0.3, 0.09, 0.01])
