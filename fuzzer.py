@@ -189,7 +189,7 @@ def fuzz_ub():
         else:
             pos, evictable = compare_against_saved_inputs(ub_curr)
             if len(undef_behaviour_list) < 20 or not evictable:
-                undef_behaviour_list.insert((ub_curr, evictable), pos)
+                undef_behaviour_list.insert(pos, (ub_curr, evictable))
 
                 f = open(f'fuzzed-tests/test_{pos}.cnf', 'w')
                 f.write(str(curr_input))
