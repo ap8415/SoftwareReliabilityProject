@@ -498,8 +498,8 @@ elif args.mode == "func":
     for file in files:
         expectations = create_follow_up_tests(file)
         for i in range(0, 50):
-            test_file = open(f'follow-up-tests/{file}_{i}.cnf', 'w')
-            sat_file = open(f'follow-up-tests/{file}_{i}.txt', 'w')
+            test_file = open(f'follow-up-tests/{file[:-4]}_{i}.cnf', 'w')
+            sat_file = open(f'follow-up-tests/{file[:-4]}_{i}.txt', 'w')
             test_file.write(str(interesting_inputs[i]))
             sat_file.write(expectation_text_form(expectations[i]))
             test_file.close()
