@@ -123,8 +123,8 @@ def classify_undefined_behaviours():
     detected_undef_behaviours = regex_detect_undef_behaviour.finditer(san_out)
     for undef_behaviour_instance in detected_undef_behaviours:
         ubsan_error = undef_behaviour_instance.group()
-        code_location = ubsan_error.split()[0]
-        error_msg = regex_parse_undef_behaviour.search(ubsan_error).group()[15:]
+        code_location = ubsan_error.split()[0][:-1]
+        error_msg = regex_parse_undef_behaviour.search(ubsan_error).group()[15:-1]
         print(f'Undefined behaviour detected: {error_msg} ; at {code_location}')
         undefined_behaviours.append((error_msg, code_location))
 
