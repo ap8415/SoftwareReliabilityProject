@@ -275,7 +275,7 @@ def check_interesting_ub(ub_curr):
     seen_already = True
     for bug_type, bug_location in ub_curr:
         bug_seen_already = False
-        for saved_input_ub in undef_behaviour_list:
+        for saved_input_ub, evictable in undef_behaviour_list:
             if saved_input_ub is not ub_curr:
                 for saved_bug_type, saved_bug_location in saved_input_ub:
                     if bug_type == saved_bug_type and bug_location == saved_bug_location:
