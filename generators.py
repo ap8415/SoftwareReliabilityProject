@@ -38,18 +38,9 @@ def generate_clause(variables, clause_length, redundant=False):
         # If we want the clause to be non-redundant (i.e no A & ¬A, or A & A type expressions),
         # we remove the variable and its negation from the pool of choices.
         if not redundant:
-            try:
-                available.remove(next)
-                available.remove(-next)
-            except ValueError as e:
-                print(next)
-                print(variables)
-                print(clause_length)
-                print(cpav)
-                exit(-1)
-            #available.remove(next)
-            #available.remove(-next)
+            available.remove(next)
+            available.remove(-next)
         clause.append(next)
-    print(variables)
-    print(len(clause))
+    # print(variables)
+    # print(len(clause))
     return clause

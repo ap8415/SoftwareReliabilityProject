@@ -3,6 +3,7 @@ import os
 import random
 import re
 import subprocess
+import time
 from contextlib import contextmanager
 from input import SolverInput
 
@@ -28,17 +29,7 @@ def create_fuzzing_input(input_file):
     Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
     """
     rng = random.randint(1, 10)
-    variables = 0
-    if rng > 9:
-        variables = random.randint(10000, 20000)
-    elif rng > 7:
-        variables = random.randint(901, 3000)
-    elif rng > 4:
-        variables = random.randint(100, 900)
-    elif rng > 1:
-        variables = random.randint(7, 30)
-    else:
-        variables = random.randint(1, 6)
+    variables = random.randint(10000, 20000)
     clauses = random.randint(variables, variables * 3)
     inp = generate_input(variables, clauses, random.random() > 0.95)
     f = open(input_file, "w")
@@ -200,13 +191,16 @@ prev_gcov_counts = get_gcov_counts(gcov_filenames)
 curr_gcov_counts = {}
 g.close()
 
-while True:
-    # Run the fuzzing process.
-    # We iterate a limited number of times, then augment the pool of interesting inputs.
-    # 200 is an appropriate number here, enough to let a decent collection of inputs accummulate
-    # while keeping the memory footprint relatively low.
-    for i in range(0, 50):
-        fuzz()
-        print(i)
-    # Augment interesting inputs pool.
-    augment()
+initial = time.clock()
+
+# Run the fuzzing process.
+# We iterate a limited number of times, then augment the pool of interesting inputs.
+# 200 is an appropriate number here, enough to let a decent collection of inputs accummulate
+# while keeping the memory footprint relatively low.
+for i in range(0, 3):
+    fuzz()
+    print(i)
+# Augment interesting inputs pool.
+# augment()
+
+print(time.clock() - initial)
