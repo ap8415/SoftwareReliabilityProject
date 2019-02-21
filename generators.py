@@ -19,22 +19,22 @@ def dimacs_header(variables, clauses, malformed = False):
         elif random.random() > 0.2:
             return f'p p cnf {variables} {clauses}'
         else:
-            return ''.join(random.choices(string.ascii_uppercase + string.digits, k=random.randint(0, 20)))
+            return ''.join(random.choices(string.ascii_uppercase + string.digits, k=random.randint(0, 200)))
 
 
 def generate_clause(variables, clause_length, redundant=False):
-    # If not redundant, clause length must be at most
-    # the number of variables for the code to work.
+    clause = []
     if not redundant:
+        # If not redundant, clause length must be at most the number of variables so we don't have repetition.
         assert (clause_length <= variables)
-    # Limit clause length for big variable sets so that the SUT won't timeout
-    if clause_length > (2000000/variables):
-        clause_length = int(2000000 / variables)
-
-    # Generate clause
-    
-    clause = random.sample(range(1, variables+1), clause_length)
-    # Randomly flips a few variables in the clause
-    # TODO: determine this coefficient by relation to no of clauses or something
-    clause = [x if random.random() > 0.9 else -x for x in clause]
-    return clause
+        clause = random.sample(range(1, variables + 1), clause_length)
+        # Randomly flips a few variables in the clause
+        clause = [x if random.random() > 0.9 else -x for x in clause]
+        return clause
+    else:
+        # Randomly flips a few variables. Note that we do want to keep the clause non-trivial at this point.
+        available_variables = [x if random.random() > 0.9 else -x for x in range(1, variables + 1)]
+        while clause_length > 0:
+            clause = clause + random.sample(available_variables, min(variables, clause_length))
+            clause_length -= variables
+        return clause

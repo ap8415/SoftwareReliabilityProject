@@ -83,5 +83,5 @@ class SolverInput:
     @staticmethod
     def generate_clauses(variables, clause_params):
         no_of_clauses, max_clause_len = clause_params
-        return [generators.generate_clause(variables, random.randint(1, max_clause_len))
+        return [generators.generate_clause(variables, random.randint(1, max_clause_len), True)
                 for _ in range(0, no_of_clauses)]
