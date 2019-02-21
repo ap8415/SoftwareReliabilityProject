@@ -54,7 +54,7 @@ def add_random_clauses(initial_input, no_of_new_clauses):
     new_clauses = [list(clause) for clause in clauses]
     for _ in range(0, no_of_new_clauses):
         new_clauses.append(generators.generate_clause(variables, random.randint(1, variables)))
-    return input.SolverInput(variables, new_clauses)
+    return input.SolverInput(variables, new_clauses), {"SAT": "UNKNOWN", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"}
 
 
 def permute_literals(initial_input):
@@ -71,12 +71,12 @@ def permute_literals(initial_input):
     for clause in clauses:
         new_clause = random.shuffle(list(clause))
         new_clauses.append(new_clause)
-    return input.SolverInput(variables, new_clauses)
+    return input.SolverInput(variables, new_clauses), {"SAT": "SAT", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"}
 
 
-def add_negated_clause(initial_input):
+def add_negated_clauses(initial_input):
     """
-    Takes a random clause C in the input, and returns a new input with the same clauses as the old one,
+    Takes several random clause C in the input, and returns a new input with the same clauses as the old one,
     to which the negation of C is added.
     :type initial_input: SolverInput
     :param initial_input: the initial input
@@ -86,9 +86,10 @@ def add_negated_clause(initial_input):
     clauses = initial_input.get_clauses()
     variables = initial_input.get_variables()
     new_clauses = [list(clause) for clause in clauses]
-    negated_clause = negate_clause(clauses[random.randint(0, len(clauses) - 1)])
-    new_clauses.append(negated_clause)
-    return input.SolverInput(variables, new_clauses)
+    for _ in random.randint(1, 10):
+        negated_clause = negate_clause(clauses[random.randint(0, len(clauses) - 1)])
+        new_clauses.append(negated_clause)
+    return input.SolverInput(variables, new_clauses), {"SAT": "UNSAT", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"}
 
 
 def negate_clause(clause):
@@ -112,4 +113,4 @@ def disjunct_with_new_variables(initial_input, no_of_variables):
     for clause in clauses:
         new_clause = list(clause) + nprand.choice(new_terms, random.randint(1, no_of_variables), replace=False)
         new_clauses.append(new_clause)
-    return input.SolverInput(variables, new_clauses)
+    return input.SolverInput(variables, new_clauses), {"SAT": "SAT", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"}

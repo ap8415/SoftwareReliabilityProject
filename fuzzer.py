@@ -4,6 +4,8 @@ import random
 import re
 import subprocess
 import time
+
+import transformations
 from modes import *
 from collections import deque
 from contextlib import contextmanager
@@ -286,9 +288,54 @@ def parse_input(file_name):
     return SolverInput(variables, clauses)
 
 
-def produce_transformed_input(input):
-    sat = {}
-    return input, sat
+def produce_transformed_input(input, sat, transforms_left=4):
+    """
+    Applies up to transforms_left transformations on the given input.
+    """
+    if transforms_left == 0:
+        return input, sat
+
+    new_input, new_sat = apply_transform(input, sat)
+    if new_input is None:
+        return input, sat
+    elif random.random() > 0.75:
+        return produce_transformed_input(new_input, new_sat, transforms_left - 1)
+    else:
+        return new_input, new_sat
+
+
+def apply_transform(input, sat):
+    """
+    Applies a metamorphic transform to the given input.
+    If none of the transforms produce a non-trivial satisfiability output, returns (None, None).
+    """
+    transforms = random.shuffle(range(0, 5))
+
+    # Uniformly picks a random transformation; if it doesn't produce an acceptable satisfiability output, tries to
+    # move on to the next transform until it runs out of transformations.
+    while transforms:
+        picked_transform = transforms[0]
+        transforms.remove(picked_transform)
+        new_input, followup_sat = [], []
+        if picked_transform == 0:
+            new_input, followup_sat = \
+                transformations.add_random_clauses(input, random.randint(1, len(input.get_clauses())) * 0.5)
+        elif picked_transform == 1:
+            new_input, followup_sat = transformations.add_negated_clauses(input)
+        elif picked_transform == 2:
+            new_input, followup_sat = transformations.disjunct_with_new_variables(input, random.randint(1, input.get_variables() * 0.2))
+        elif picked_transform == 3:
+            new_input, followup_sat = transformations.permute_literals(input)
+        elif picked_transform == 4:
+            new_input, followup_sat = input, sat # TODO
+        combined_sat = {"SAT": followup_sat[sat["SAT"]],
+                        "UNSAT": followup_sat[sat["UNSAT"]],
+                        "UNKNOWN": "UNKNOWN"}
+        if not combined_sat["SAT"] == "UNKNOWN" or not combined_sat["UNSAT"] == "UNKNOWN":
+            return new_input, combined_sat
+
+    return None, None
+    # Choose transform at random.
 
 
 def create_follow_up_tests(file_name):
@@ -313,7 +360,7 @@ def create_follow_up_tests(file_name):
             if since_last_interesting_input > 15:
                 break
 
-            new_input = produce_transformed_input(input)
+            new_input = produce_transformed_input(input, {"SAT": "SAT", "UNSAT": "UNSAT", "UNKNOWN": "UNKNOWN"})
             write_input_to_file(new_input)
             # Use 60-second timeout to try follow-up tests.
             fuzz_the_sut = subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0 60', shell=True)
