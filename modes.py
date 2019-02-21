@@ -26,18 +26,19 @@ class ModeClauses(Enum):
         elif self is ModeClauses.FEW_AND_LONG:
             no_of_clauses = random.randint(max(1, int(0.05 * variables)), max(1, int(0.4 * variables)))
             max_len = int(1000000 / no_of_clauses)
-            return no_of_clauses, min(max_len, random.randint(variables + 1, variables * 40))
+            return no_of_clauses, min(max_len, random.randint(variables + 1, variables * 20))
         elif self is ModeClauses.MANY_AND_LONG:
             # If too many variables, re-use the balanced mode, as this one will generate a LOT of literals.
-            if variables > 500:
+            if variables > 200:
                 return ModeClauses.BALANCED.get_clause_parameters(variables)
             else:
-                no_of_clauses = random.randint(10 * variables, 50 * variables)
-                max_len = int(1000000 / no_of_clauses)
-                return no_of_clauses, random.randint(variables + 1, min(max_len, variables * 30))
+                no_of_clauses = random.randint(10 * variables, 30 * variables)
+                max_len = int(3000000 / no_of_clauses)
+                return no_of_clauses, random.randint(variables + 1, min(max_len, variables * 5))
         elif self is ModeClauses.SPECIAL:
             # TODO: implement this. Basically goes into the extremes
             return ModeClauses.BALANCED.get_clause_parameters(variables)
+
 
 class ModeVariables(Enum):
     """

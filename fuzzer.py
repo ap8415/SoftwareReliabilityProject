@@ -112,7 +112,13 @@ def create_ub_fuzzing_input():
     variables = mode_variables.get_variables()
     clause_params = mode_clauses.get_clause_parameters(variables)
 
-    inp = generate_input(variables, clause_params, random.random() > 0.99)
+    inp = None
+    while inp is None:
+        try:
+            inp = generate_input(variables, clause_params, random.random() > 0.99)
+        except BaseException as e:
+            # If something wrong happens in input generation, just try again so that the process doesn't stop
+            continue
 
     combine_with_interesting_input = random.random()
 
