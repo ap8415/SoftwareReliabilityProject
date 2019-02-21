@@ -5,7 +5,7 @@
 SUT_PATH=$1
 FUZZER_PATH=$(pwd)
 
-cd SUT_PATH
+cd ${SUT_PATH}
 make func
-cd FUZZER_PATH
+cd ${FUZZER_PATH}
 exit

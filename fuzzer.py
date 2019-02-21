@@ -393,7 +393,7 @@ def apply_transform(input, sat):
     Applies a metamorphic transform to the given input.
     If none of the transforms produce a non-trivial satisfiability output, returns (None, None).
     """
-    transforms = random.shuffle(range(0, 4)) # TODO: add fifth transform
+    transforms = random.shuffle(list(range(0, 4))) # TODO: add fifth transform
 
     # Uniformly picks a random transformation; if it doesn't produce an acceptable satisfiability output, tries to
     # move on to the next transform until it runs out of transformations.
