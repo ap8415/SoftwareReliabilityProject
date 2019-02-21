@@ -8,8 +8,11 @@ SUT_DIR=$1
 # If it 0, the script will run the SUT; if it is 1, the script will simply produce the coverage metrics.
 RUN_SUT=$2
 
+# Specify timeout for running the SUT, in seconds.
+TIMEOUT=$3
+
 # Cleanup of previous iteration; TODO: implement timeout INSIDE the bash script so that I don't do this anymore
-if [ "${RUN_SUT}" = "0" ];
+if [[ "${RUN_SUT}" = "0" ]];
 then
     rm san_output.txt
 fi
@@ -19,12 +22,22 @@ rm gcov_output.txt
 FUZZER_DIR=$(pwd)
 cd ${SUT_DIR}
 
-if [ "${RUN_SUT}" = "0" ];
+RET_CODE=0
+if [[ "${RUN_SUT}" = "0" ]];
 then
     # Run the SUT
     cp ${FUZZER_DIR}/test.cnf test.cnf
-    ./runsat.sh test.cnf &> san_output.txt
+    timeout ${TIMEOUT}s ./runsat.sh test.cnf &> san_output.txt
+    RET_CODE=$(echo $?)
     rm test.cnf
+fi
+
+# If command times out, return 1
+if ${RET_CODE} = 124
+then
+    rm san_output.txt
+    cd ${FUZZER_DIR}
+    exit 1
 fi
 
 C_FILES=$(find -name "*.c")
@@ -37,7 +50,7 @@ do
 done
 
 # Move files back to fuzzer for analysis, perform cleanup
-if [ "${RUN_SUT}" = "0" ];
+if [[ "${RUN_SUT}" = "0" ]];
 then
     cp san_output.txt ${FUZZER_DIR}/san_output.txt
     rm san_output.txt
@@ -46,4 +59,4 @@ cp gcov_output.txt ${FUZZER_DIR}/gcov_output.txt
 rm gcov_output.txt
 
 cd ${FUZZER_DIR}
-exit
+exit 0

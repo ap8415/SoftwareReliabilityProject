@@ -62,6 +62,16 @@ class SolverInput:
     def __hash__(self):
         return hash(self.__str__())
 
+    def count_literals(self):
+        return sum([len(clause) for clause in self.clauses])
+
+    def should_run_fast(self):
+        """
+        Simple heuristic to estimate whether the input is small enough to be runnable fast.
+        """
+        return sum([len(clause) for clause in self.clauses]) < 50000 or len(self.clauses) < 5000
+
+
     @staticmethod
     def create_input(variables, no_of_clauses):
         """
