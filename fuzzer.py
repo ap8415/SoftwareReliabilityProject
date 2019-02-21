@@ -28,8 +28,7 @@ def create_fuzzing_input(input_file):
     It then saves the input in text form in input_file, from which the SUT will read it.
     Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
     """
-    rng = random.randint(1, 10)
-    variables = random.randint(1000, 2000)
+    variables = random.randint(10, 100)
     clauses = random.randint(variables, variables * 3)
     inp = generate_input(variables, clauses, random.random() > 0.95)
     f = open(input_file, "w")
@@ -89,6 +88,36 @@ def get_gcov_counts(source_file_names):
 tracked_inputs = []
 interesting_inputs = []
 
+regex_heap_buf_overflow = re.compile(r'ERROR: AddressSanitizer: heap-buffer-overflow on address')
+regex_heap_use_after_free = re.compile(r'ERROR: AddressSanitizer: heap-use-after-free on address')
+regex_stack_buf_overflow = re.compile(r'ERROR: AddressSanitizer: stack-buffer-overflow on address')
+regex_global_buf_overflow = re.compile(r'ERROR: AddressSanitizer: global-buffer-overflow on address')
+regex_stack_use_after_return = re.compile(r'ERROR: AddressSanitizer: stack-use-after-return on address')
+regex_initializer_order_err = re.compile(r'ERROR: AddressSanitizer: initialization-order-fiasco on address')
+regex_use_after_scope_err = re.compile(r'ERROR: AddressSanitizer: stack-use-after-scope on address')
+asan_errors = [regex_heap_buf_overflow,
+               regex_heap_use_after_free,
+               regex_stack_buf_overflow,
+               regex_global_buf_overflow,
+               regex_stack_use_after_return,
+               regex_initializer_order_err,
+               regex_use_after_scope_err]
+
+
+def examine_sanitizer_output():
+    f = open('san_output.txt', 'r')
+    sanout = f.read()
+
+    regex_undef_behaviour = re.compile(r'[\w :]+runtime error: [\w -]+\n')
+    undef_behaviours = regex_undef_behaviour.finditer(sanout)
+    for undef_behaviour_instance in undef_behaviours:
+        print(f'Undefined behaviour detected: {undef_behaviour_instance.group()}')
+
+    for asan_error in asan_errors:
+        asan_errors_detected = asan_error.finditer(sanout)
+        for err in asan_errors_detected:
+            print(f'Undefined behaviour detected: {err.group()}')
+
 
 def fuzz():
     """
@@ -119,15 +148,7 @@ def fuzz():
         prev_gcov_counts = curr_gcov_counts
         tracked_inputs.append((curr_input, gcov_input_counts))
 
-        f = open('san_output.txt', 'r')
-        sanout = f.read()
-        print(sanout)
-        reg = re.compile(r'use-after-free')
-        q = reg.search(sanout)
-        if q is not None:
-            print(q.group() + "YASS")
-        else:
-            print("Nope")
+        examine_sanitizer_output()
     except subprocess.TimeoutExpired:
         print("TIMEOUT OCCURRED!")
 
@@ -198,7 +219,7 @@ initial = time.clock()
 # We iterate a limited number of times, then augment the pool of interesting inputs.
 # 200 is an appropriate number here, enough to let a decent collection of inputs accummulate
 # while keeping the memory footprint relatively low.
-for i in range(0, 3):
+for i in range(0, 3000):
     fuzz()
     print(i)
 # Augment interesting inputs pool.
