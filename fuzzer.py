@@ -17,7 +17,7 @@ def cd(newdir):
 
 
 def generate_input(variables, clauses, malformed):
-    return SolverInput(variables, clauses)
+    return SolverInput.create_input(variables, clauses)
 
 
 def create_fuzzing_input(input_file):
@@ -133,7 +133,7 @@ def fuzz():
         reg = re.compile(r'use-after-free')
         q = reg.search(sanout)
         if q is not None:
-            print(q.group())
+            print(q.group() + "YASS")
         else:
             print("Nope")
     except subprocess.TimeoutExpired:
