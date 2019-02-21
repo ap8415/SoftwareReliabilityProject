@@ -79,7 +79,6 @@ class SolverInput:
             for item in clause:
                 string_form = string_form + f'{item} '
             string_form = string_form + '0\n'
-        print('\n\n\n' + string_form + '\n\n\n')
         return string_form
 
     def __hash__(self):

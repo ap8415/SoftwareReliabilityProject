@@ -27,8 +27,8 @@ def create_fuzzing_input(input_file):
     It then saves the input in text form in input_file, from which the SUT will read it.
     Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
     """
-    variables = random.randint(1, 30)
-    clauses = random.randint(1, variables * 5)
+    variables = random.randint(20, 30)
+    clauses = random.randint(variables, variables * 3)
     inp = generate_input(variables, clauses, random.random() > 0.95)
     f = open(input_file, "w")
     f.write(str(inp))
@@ -78,7 +78,6 @@ def get_gcov_counts(source_file_names):
                 # Then line hasn't been hit, or does not contain code (e.g. lines with only curly braces)
                 iterations.append(0)
         gcov_counts[file_name] = iterations
-    print(gcov_counts)
     return gcov_counts
 
 
@@ -115,8 +114,17 @@ def fuzz():
 
         gcov_input_counts = get_gcov_input_counts(prev_gcov_counts, curr_gcov_counts)
         prev_gcov_counts = curr_gcov_counts
-        tracked_inputs[curr_input] = gcov_input_counts
+        tracked_inputs.append((curr_input, gcov_input_counts))
 
+        f = open('san_output.txt', 'r')
+        sanout = f.read()
+        print(sanout)
+        reg = re.compile(r'runtime error:.+\n')
+        q = reg.search(sanout)
+        if q is not None:
+            print(q.group())
+        else:
+            print("Nope")
     except subprocess.TimeoutExpired:
         print("TIMEOUT OCCURRED!")
 
@@ -139,13 +147,13 @@ def augment():
         max_counts[file] = max(curr_gcov_counts[file])
 
     for file in curr_gcov_counts.keys():
-        for i in range(0, curr_gcov_counts[file]):
+        for i in range(0, len(curr_gcov_counts[file])):
             if curr_gcov_counts[file][i] < 0.01 * max_counts[file]:
                 max_count = 0
                 best_input = None
                 for input, counts in tracked_inputs:
-                    if counts[i] > max_count:
-                        max_count = counts[i]
+                    if counts[file][i] > max_count:
+                        max_count = counts[file][i]
                         best_input = input
                 if best_input is not None:
                     next_interesting_inputs.add(best_input)
@@ -171,7 +179,7 @@ args = parser.parse_args()
 
 input_filename = "test.cnf"
 # If test.cnf is already present, clean it up first.
-os.remove(input_filename)
+# TODO
 
 # Get initial zero values for coverage so that we can compute rolling coverage for each test input
 subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 1', timeout=10, shell=True)
@@ -183,8 +191,11 @@ g.close()
 
 while True:
     # Run the fuzzing process.
-    # 2000 times is enough to keep the number of saved inputs relatively small, but still interesting enough.
-    for _ in range(0, 2000):
+    # We iterate a limited number of times, then augment the pool of interesting inputs.
+    # 200 is an appropriate number here, enough to let a decent collection of inputs accummulate
+    # while keeping the memory footprint relatively low.
+    for i in range(0, 50):
         fuzz()
+        print(i)
     # Augment interesting inputs pool.
     augment()

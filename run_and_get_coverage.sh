@@ -9,7 +9,7 @@ SUT_DIR=$1
 RUN_SUT=$2
 
 # Cleanup of previous iteration; TODO: implement timeout INSIDE the bash script so that I don't do this anymore
-if ${RUN_SUT}==0
+if [ "${RUN_SUT}" = "0" ];
 then
     rm san_output.txt
 fi
@@ -19,7 +19,7 @@ rm gcov_output.txt
 FUZZER_DIR=$(pwd)
 cd ${SUT_DIR}
 
-if ${RUN_SUT}==0
+if [ "${RUN_SUT}" = "0" ];
 then
     # Run the SUT
     cp ${FUZZER_DIR}/test.cnf test.cnf
@@ -30,14 +30,14 @@ fi
 C_FILES=$(find -name "*.c")
 for filename in ${C_FILES}
 do
-    gcov ${filename} # produces filename.gcov file
+    gcov ${filename} &> /dev/null # produces filename.gcov file
     GCOVNAME="${filename}.gcov"
     echo "${GCOVNAME} " >> gcov_output.txt
     cp ${GCOVNAME} ${FUZZER_DIR}/${GCOVNAME}
 done
 
 # Move files back to fuzzer for analysis, perform cleanup
-if ${RUN_SUT}==0
+if [ "${RUN_SUT}" = "0" ];
 then
     cp san_output.txt ${FUZZER_DIR}/san_output.txt
     rm san_output.txt
