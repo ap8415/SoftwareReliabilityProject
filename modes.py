@@ -18,13 +18,13 @@ class ModeClauses(Enum):
             # Limit the no of clauses to 500k so we can have non-trivial ones
             no_of_clauses = random.randint(min(100000, 10 * variables), min(500000, 200 * variables))
             max_len = int(1000000 / no_of_clauses)
-            return no_of_clauses, min(max_len, max(3, 0.05 * variables))
+            return no_of_clauses, min(max_len, max(3, int(0.05 * variables)))
         elif self is ModeClauses.BALANCED:
             no_of_clauses = random.randint(variables, 3 * variables)
             max_len = int(1000000 / no_of_clauses)
             return no_of_clauses, min(max_len, variables)
         elif self is ModeClauses.FEW_AND_LONG:
-            no_of_clauses = random.randint(max(1, random.randint(0.05 * variables, 0.4 * variables)))
+            no_of_clauses = random.randint(max(1, random.randint(int(0.05 * variables), int(0.4 * variables))))
             max_len = int(1000000 / no_of_clauses)
             return no_of_clauses, min(max_len, random.randint(variables + 1, variables * 40))
         elif self is ModeClauses.MANY_AND_LONG:
