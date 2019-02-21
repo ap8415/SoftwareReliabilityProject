@@ -33,7 +33,7 @@ then
 fi
 
 # If command times out, return 1
-if ${RET_CODE} = 124
+if [[ "${RET_CODE}" = "124" ]];
 then
     rm san_output.txt
     cd ${FUZZER_DIR}
