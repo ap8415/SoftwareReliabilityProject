@@ -66,7 +66,7 @@ class SolverInput:
         """
         Simple heuristic to estimate whether the input is small enough to be runnable fast.
         """
-        return sum([len(clause) for clause in self.clauses]) < 50000 or len(self.clauses) < 5000
+        return sum([len(clause) for clause in self.clauses]) < 200000 and len(self.clauses) < 5000
 
 
     @staticmethod
