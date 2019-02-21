@@ -24,7 +24,7 @@ class ModeClauses(Enum):
             max_len = int(1000000 / no_of_clauses)
             return no_of_clauses, min(max_len, variables)
         elif self is ModeClauses.FEW_AND_LONG:
-            no_of_clauses = random.randint(max(1, int(0.05 * variables)), int(0.4 * variables))
+            no_of_clauses = random.randint(max(1, int(0.05 * variables)), max(1, int(0.4 * variables)))
             max_len = int(1000000 / no_of_clauses)
             return no_of_clauses, min(max_len, random.randint(variables + 1, variables * 40))
         elif self is ModeClauses.MANY_AND_LONG:

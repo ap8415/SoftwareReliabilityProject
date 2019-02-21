@@ -146,8 +146,6 @@ def select_random_modes():
     global mode_variables
     global mode_clauses
 
-    print(possible_modes_variables)
-
     mode_variables = nprand.choice(possible_modes_variables, p=[0.15, 0.34, 0.4, 0.1, 0.0095, 0.0005])
     mode_clauses = nprand.choice(possible_modes_clauses, p=[0.3, 0.3, 0.3, 0.09, 0.01])
 

@@ -70,15 +70,14 @@ class SolverInput:
 
 
     @staticmethod
-    def create_input(variables, no_of_clauses):
+    def create_input(variables, clause_params):
         """
         Factory method to generate a new random input.
         :param variables: number of variables
         :param no_of_clauses: number of clauses
         :return: a new random input
         """
-        print(f'{variables} AND {no_of_clauses}')
-        return SolverInput(variables, SolverInput.generate_clauses(variables, no_of_clauses))
+        return SolverInput(variables, SolverInput.generate_clauses(variables, clause_params))
 
     @staticmethod
     def generate_clauses(variables, clause_params):
