@@ -27,7 +27,18 @@ def create_fuzzing_input(input_file):
     It then saves the input in text form in input_file, from which the SUT will read it.
     Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
     """
-    variables = random.randint(20, 30)
+    rng = random.randint(1, 10)
+    variables = 0
+    if rng > 9:
+        variables = random.randint(10000, 20000)
+    elif rng > 7:
+        variables = random.randint(901, 3000)
+    elif rng > 4:
+        variables = random.randint(100, 900)
+    elif rng > 1:
+        variables = random.randint(7, 30)
+    else:
+        variables = random.randint(1, 6)
     clauses = random.randint(variables, variables * 3)
     inp = generate_input(variables, clauses, random.random() > 0.95)
     f = open(input_file, "w")
@@ -119,7 +130,7 @@ def fuzz():
         f = open('san_output.txt', 'r')
         sanout = f.read()
         print(sanout)
-        reg = re.compile(r'runtime error:.+\n')
+        reg = re.compile(r'use-after-free')
         q = reg.search(sanout)
         if q is not None:
             print(q.group())

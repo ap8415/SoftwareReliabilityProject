@@ -10,34 +10,19 @@ class SolverInput:
 
     It allows us to :
      - store a programmatic version of a SAT solver input
-     - ocnvert an input to text form
-     - generate randomized inputs, according to parameters which we set such as
-       number of variables, number of clauses, format etc.
+     - convert an input to text form
+     - generate randomized inputs, according to parameters which we set such as number of variables,
+     number of clauses, format etc.
      - combine inputs into a larger input in order to try and maximize coverage
-     - perform various kinds of metamorphic transformations on inputs.#
+     - perform various kinds of metamorphic transformations on inputs.
     This class is treated as immutable; none of its internal members are changed after creation.
     """
-
-    @staticmethod
-    def create_input(variables, no_of_clauses):
-        """
-        Factory method to generate a new random input.
-        :param variables: number of variables
-        :param no_of_clauses: number of clauses
-        :return: a new random input
-        """
-        return SolverInput(variables, SolverInput.generate_clauses(variables, no_of_clauses))
 
     def __init__(self, variables, clauses):
         self.variables = variables
         self.malformed = False
         self.clauses = clauses
         self.no_of_clauses = len(clauses)
-
-    @staticmethod
-    def generate_clauses(variables, no_of_clauses):
-        return [generators.generate_clause(variables, random.randint(1, variables))
-                for _ in range(0, no_of_clauses)]
 
     def get_clauses(self):
         return self.clauses
@@ -76,3 +61,18 @@ class SolverInput:
 
     def __hash__(self):
         return hash(self.__str__())
+
+    @staticmethod
+    def create_input(variables, no_of_clauses):
+        """
+        Factory method to generate a new random input.
+        :param variables: number of variables
+        :param no_of_clauses: number of clauses
+        :return: a new random input
+        """
+        return SolverInput(variables, SolverInput.generate_clauses(variables, no_of_clauses))
+
+    @staticmethod
+    def generate_clauses(variables, no_of_clauses):
+        return [generators.generate_clause(variables, random.randint(1, variables))
+                for _ in range(0, no_of_clauses)]
