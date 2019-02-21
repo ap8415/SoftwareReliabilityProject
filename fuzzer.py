@@ -29,7 +29,7 @@ def create_fuzzing_input(input_file):
     Finally, it returns the SolverInput instance, so that the fuzzer can re-use it.
     """
     rng = random.randint(1, 10)
-    variables = random.randint(10000, 20000)
+    variables = random.randint(1000, 2000)
     clauses = random.randint(variables, variables * 3)
     inp = generate_input(variables, clauses, random.random() > 0.95)
     f = open(input_file, "w")
@@ -101,14 +101,15 @@ def fuzz():
     global curr_gcov_counts
     global prev_gcov_counts
     global tracked_inputs
-
+    global initial
     # Generate fuzzed input
     curr_input = create_fuzzing_input(input_filename)
 
+    print(time.clock() - initial)
     # Runs a script, which calls runsat.sh on the SUT with fuzzed input,
     # then writes the sanitizer and gcov output to files
     try:
-        subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0', timeout=10, shell=True)
+        subprocess.run(f'./run_and_get_coverage.sh {args.sut_path} 0', timeout=30, shell=True)
         # Done with files, so I can close them
         g = open('gcov_output.txt', 'r')
         curr_gcov_counts = get_gcov_counts(g.read().split())

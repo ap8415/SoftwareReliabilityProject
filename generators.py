@@ -28,14 +28,12 @@ def generate_clause(variables, clause_length, redundant=False):
     if not redundant:
         assert (clause_length <= variables)
     # Limit clause length for big variable sets so that the SUT won't timeout
-    if clause_length > (200000/variables):
-        clause_length = int(200000 / variables)
+    if clause_length > (2000000/variables):
+        clause_length = int(2000000 / variables)
 
     # Generate clause
-    available = set(range(1, variables + 1))
-    while len(available) > clause_length:
-        available.remove(random.sample(available, 1)[0])
-    clause = list(available)
+    
+    clause = random.sample(range(1, variables+1), clause_length)
     # Randomly flips a few variables in the clause
     # TODO: determine this coefficient by relation to no of clauses or something
     clause = [x if random.random() > 0.9 else -x for x in clause]

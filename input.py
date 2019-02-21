@@ -70,6 +70,7 @@ class SolverInput:
         :param no_of_clauses: number of clauses
         :return: a new random input
         """
+        print(f'{variables} AND {no_of_clauses}')
         return SolverInput(variables, SolverInput.generate_clauses(variables, no_of_clauses))
 
     @staticmethod
