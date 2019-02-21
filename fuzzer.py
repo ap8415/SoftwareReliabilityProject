@@ -88,35 +88,54 @@ def get_gcov_counts(source_file_names):
 tracked_inputs = []
 interesting_inputs = []
 
-regex_heap_buf_overflow = re.compile(r'ERROR: AddressSanitizer: heap-buffer-overflow on address')
-regex_heap_use_after_free = re.compile(r'ERROR: AddressSanitizer: heap-use-after-free on address')
-regex_stack_buf_overflow = re.compile(r'ERROR: AddressSanitizer: stack-buffer-overflow on address')
-regex_global_buf_overflow = re.compile(r'ERROR: AddressSanitizer: global-buffer-overflow on address')
-regex_stack_use_after_return = re.compile(r'ERROR: AddressSanitizer: stack-use-after-return on address')
-regex_initializer_order_err = re.compile(r'ERROR: AddressSanitizer: initialization-order-fiasco on address')
-regex_use_after_scope_err = re.compile(r'ERROR: AddressSanitizer: stack-use-after-scope on address')
-asan_errors = [regex_heap_buf_overflow,
-               regex_heap_use_after_free,
-               regex_stack_buf_overflow,
-               regex_global_buf_overflow,
-               regex_stack_use_after_return,
-               regex_initializer_order_err,
-               regex_use_after_scope_err]
+
+# ASan parsing
+regex_heap_buf_overflow = re.compile(r'ERROR: AddressSanitizer: heap-buffer-overflow on address[\w ]+\n.+\n]')
+regex_heap_use_after_free = re.compile(r'ERROR: AddressSanitizer: heap-use-after-free on address[\w ]+\n.+\n]')
+regex_stack_buf_overflow = re.compile(r'ERROR: AddressSanitizer: stack-buffer-overflow on address[\w ]+\n.+\n]')
+regex_global_buf_overflow = re.compile(r'ERROR: AddressSanitizer: global-buffer-overflow on address[\w ]+\n.+\n]')
+regex_stack_use_after_return = re.compile(r'ERROR: AddressSanitizer: stack-use-after-return on address[\w ]+\n.+\n]')
+regex_initializer_order_err = re.compile(r'ERROR: AddressSanitizer: initialization-order-fiasco on address[\w ]+\n.+\n]')
+regex_use_after_scope_err = re.compile(r'ERROR: AddressSanitizer: stack-use-after-scope on address[\w ]+\n.+\n]')
+asan_errors = {"heap_buf_overflow": regex_heap_buf_overflow,
+               "heap_use_after_free": regex_heap_use_after_free,
+               "stack_buf_overflow": regex_stack_buf_overflow,
+               "global_buf_overflow": regex_global_buf_overflow,
+               "use_after_return": regex_stack_use_after_return,
+               "initialization_order": regex_initializer_order_err,
+               "use_after_scope": regex_use_after_scope_err}
+
+#UBSan parsing
+regex_detect_undef_behaviour = re.compile(r'[\w. :]+runtime error: [\w -]+\n')
+regex_parse_undef_behaviour = re.compile(r'runtime error: [\w -]+\n')
 
 
-def examine_sanitizer_output():
+def classify_undefined_behaviours():
+    """
+    Parses the sanitizer output to detect undefined behaviours found in the test cases.
+    :return: a list of pairs, which consist of undefined behaviour + code location
+    """
     f = open('san_output.txt', 'r')
-    sanout = f.read()
+    san_out = f.read()
 
-    regex_undef_behaviour = re.compile(r'[\w :]+runtime error: [\w -]+\n')
-    undef_behaviours = regex_undef_behaviour.finditer(sanout)
-    for undef_behaviour_instance in undef_behaviours:
-        print(f'Undefined behaviour detected: {undef_behaviour_instance.group()}')
+    undefined_behaviours = []
 
-    for asan_error in asan_errors:
-        asan_errors_detected = asan_error.finditer(sanout)
+    detected_undef_behaviours = regex_detect_undef_behaviour.finditer(san_out)
+    for undef_behaviour_instance in detected_undef_behaviours:
+        ubsan_error = undef_behaviour_instance.group()
+        code_location = ubsan_error.split()[0]
+        error_msg = regex_parse_undef_behaviour.search(ubsan_error).group()[15:]
+        print(f'Undefined behaviour detected: {error_msg} ; at {code_location}')
+        undefined_behaviours.append((error_msg, code_location))
+
+    for asan_error in asan_errors.keys():
+        asan_errors_detected = asan_errors[asan_error].finditer(san_out)
         for err in asan_errors_detected:
-            print(f'Undefined behaviour detected: {err.group()}')
+            code_location = err.group().split()[-1]
+            print(f'Undefined behaviour detected: {asan_error} at {code_location}')
+            undefined_behaviours.append((asan_error, code_location))
+
+    return undefined_behaviours
 
 
 def fuzz():
@@ -148,7 +167,7 @@ def fuzz():
         prev_gcov_counts = curr_gcov_counts
         tracked_inputs.append((curr_input, gcov_input_counts))
 
-        examine_sanitizer_output()
+        classify_undefined_behaviours()
     except subprocess.TimeoutExpired:
         print("TIMEOUT OCCURRED!")
 
