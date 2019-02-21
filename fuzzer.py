@@ -470,6 +470,8 @@ g.close()
 
 if args.mode == "ub":
     # Fuzz in ub mode.
+    ub_path = 'fuzzed-tests'
+    os.mkdir(ub_path)
     while True:
         fuzz_ub()
 elif args.mode == "func":
