@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-pyinstaller --onefile --name="fuzz-sat" --distpath=$(pwd) fuzzer.py
+echo "alias fuzz-sat='python3 fuzzer.py'" >> ~/.bashrc
 exit
-
