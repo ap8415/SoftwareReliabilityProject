@@ -111,13 +111,7 @@ def create_ub_fuzzing_input():
     variables = mode_variables.get_variables()
     clause_params = mode_clauses.get_clause_parameters(variables)
 
-    inp = None
-    while inp is None:
-        try:
-            inp = generate_input(variables, clause_params, random.random() > 0.99)
-        except BaseException as e:
-            # If something wrong happens in input generation, just try again so that the process doesn't stop
-            continue
+    inp = generate_input(variables, clause_params, random.random() > 0.99)
 
     combine_with_interesting_input = random.random()
 
@@ -193,9 +187,13 @@ def fuzz_ub():
             return
         else:
             pos, evictable = compare_against_saved_inputs(ub_curr)
-            if len(undef_behaviour_list) < 20 or not evictable:
+            if len(undef_behaviour_list) < 20:
                 undef_behaviour_list.insert(pos, (ub_curr, evictable))
-
+                f = open(f'fuzzed-tests/test_{pos}.cnf', 'w')
+                f.write(str(curr_input))
+                f.close()
+            elif not evictable:
+                undef_behaviour_list[pos] = (ub_curr, evictable)
                 f = open(f'fuzzed-tests/test_{pos}.cnf', 'w')
                 f.write(str(curr_input))
                 f.close()
@@ -266,7 +264,7 @@ def compare_against_saved_inputs(ub_curr):
                 elif not check_interesting_ub(ub):
                     return i, False
             # If we've not returned at any point, simply evict at random.
-            return random.randint(0, 19)
+            return random.randint(0, 19), True
         else:
             return -1, False
 
