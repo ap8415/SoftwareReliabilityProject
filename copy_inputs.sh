@@ -9,10 +9,10 @@ FUZZER_DIR=$(pwd)
 
 cd ${INPUTS_DIR}
 
-for file in $(ls)
+for file in *.cnf;
 do
     cp ${file} ${FUZZER_DIR}/${file}
-    echo "${file} \n" > ${FUZZER_DIR}/inputs.txt
+    echo "${file}" >> ${FUZZER_DIR}/inputs.txt
 done
 
 cd ${FUZZER_DIR}

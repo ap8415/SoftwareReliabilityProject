@@ -75,14 +75,13 @@ def classify_undefined_behaviours():
         ubsan_error = undef_behaviour_instance.group()
         code_location = ubsan_error.split()[0][:-1]
         error_msg = regex_parse_undef_behaviour.search(ubsan_error).group()[15:-1]
-        print(f'Undefined behaviour detected: {error_msg} ; at {code_location}')
         undefined_behaviours.append((error_msg, code_location))
 
     for asan_error in asan_errors.keys():
         asan_errors_detected = asan_errors[asan_error].finditer(san_out)
         for err in asan_errors_detected:
             code_location = err.group().split()[-1]
-            print(f'Undefined behaviour detected: {asan_error} at {code_location}')
+
             undefined_behaviours.append((asan_error, code_location))
 
     return undefined_behaviours
@@ -490,7 +489,8 @@ elif args.mode == "func":
     subprocess.run(f'./copy_inputs.sh {args.inputs_path}', shell=True)
 
     g = open('inputs.txt', 'r')
-    files = g.read().split()
+    files = g.read().splitlines()
+    print(files)
 
     def expectation_text_form(expectation):
         return f'SAT->{expectation["SAT"]}\nUNSAT->{expectation["UNSAT"]}'
